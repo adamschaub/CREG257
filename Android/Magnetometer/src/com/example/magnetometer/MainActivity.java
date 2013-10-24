@@ -1,5 +1,12 @@
 package com.example.magnetometer;
 
+import java.security.Provider;
+import java.security.Security;
+import java.util.ArrayList;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -19,7 +26,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 	private Sensor mag;
 	private double prevRMS = 0;
 	private int prevLogicalVal = 0;
-	private int numBits = 0;
 	private double prevTS;
 	private boolean logging = false;
 	private int currentPeriod = 20000;
@@ -32,6 +38,27 @@ public class MainActivity extends Activity implements SensorEventListener {
 	private int state = 0;
 	private int bitsRecieved = 0;
 	private int inByte = 0;
+	private int numInTriplet = 0;
+	private int triplet[] = new int [3];
+	
+	private int prevVal = -1;
+	private int errors = 0;
+	private int noterrors = 0;
+	private int currentByte;
+	private byte string[] = {'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'};
+	
+	private int bitcount = 0;
+	
+	byte key[] =
+		{
+		    0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
+		    0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
+		    0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
+		    0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
+		};
+	
+	byte encryptedData [] = new byte[16];
+	byte decryptedData [];
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,8 +68,9 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         if ((mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)) != null) {
         	System.out.println("Success! There is a magnetometer!");
-        	sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_FASTEST);
-        	//sensorManager.registerListener(this, mag, currentPeriod);
+        	//sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_FASTEST);
+        	currentPeriod = 100;
+        	sensorManager.registerListener(this, mag, currentPeriod);
         } else {
         	System.out.println("Failure! There is no magnetometer!");
         }
@@ -104,22 +132,48 @@ public class MainActivity extends Activity implements SensorEventListener {
 		 * has been completely received, we expect the next 32 bits
 		 * will constitute four bytes (lowest bit first).  Then, go back to
 		 * state=0 and wait for another preamble.  */
-		if (state == 8) {
-			inByte >>= 1;
-			inByte |= (logicalVal << 7);
-			bitsRecieved++;
-			//binaryVal.setText(binaryVal.getText() + "" + logicalVal);
-			if ((bitsRecieved % 8) == 0) {
-				binaryVal.setText(binaryVal.getText() + "" + (char) inByte);
-				inByte = 0;
-				if (bitsRecieved == (8*4)) {
-					bitsRecieved = 0;
-					state = 0;
+		
+		//binaryVal.setText(binaryVal.getText() + "" + logicalVal);
+		if (state == 16) {
+				inByte >>= 1;
+				inByte |= (logicalVal << 7);
+				bitsRecieved++;
+				
+				int expectedVal = (string[(bitsRecieved-1)/8] >> ((bitsRecieved-1)%8)) & 0x1;
+				if (expectedVal != logicalVal)
+					errors++;
+				else
+					noterrors++;
+				
+				if ((bitsRecieved % 8) == 0) {
+					//binaryVal.setText(binaryVal.getText() + "" + String.format("%02x", inByte));
+					encryptedData[(bitsRecieved/8)-1] = (byte) inByte;
+					//binaryVal.setText(binaryVal.getText() + "" + (char) inByte);
+					inByte = 0;
+					if (bitsRecieved == (8*16)) {
+						bitsRecieved = 0;
+						state = 0;
+						/*try {
+							decryptedData = decrypt(key, encryptedData);
+						} catch (Exception e) { e.printStackTrace(); }*/
+						if (binaryVal.getText().length() > 34*25)
+							binaryVal.setText("");
+						binaryVal.setText(binaryVal.getText() + " ");
+						for (int i=0; i<16; i++) {
+							//binaryVal.setText(binaryVal.getText() + "" + (char) decryptedData[i]);
+							binaryVal.setText(binaryVal.getText() + "" + (char) encryptedData[i]);
+						}
+					}
+				}
+			//}
+		} else {
+			if (((state % 2) == 0 && logicalVal == 1) || ((state % 2) == 1 && logicalVal == 0)) {
+				state++;
+				if (state == 16) {
+					errors = 0;
+					noterrors = 0;
 				}
 			}
-		} else {
-			if (((state % 2) == 0 && logicalVal == 1) || ((state % 2) == 1 && logicalVal == 0))
-				state++;
 			else
 				state = 0;
 		}
@@ -128,8 +182,17 @@ public class MainActivity extends Activity implements SensorEventListener {
 		freqText.setText("Freq (Hz):          " + freq);
 		avgJitText.setText("Avg Jitter(Hz):  " + avgJit);
 		avgFreqText.setText("Avg Freq (Hz):  " + avgFreq);
-		periodText.setText("Period (us):      " + currentPeriod);
+		//periodText.setText("Period (us):      " + currentPeriod);
+		periodText.setText("Errors      " + errors + " Good bits: " + noterrors);
 	}
+	
+	private static byte[] decrypt(byte[] raw, byte[] encrypted) throws Exception {
+        SecretKeySpec skeySpec = new SecretKeySpec(raw, "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec);
+        byte[] decrypted = cipher.doFinal(encrypted);
+        return decrypted;
+    }
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
