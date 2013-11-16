@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.Set;
 import java.util.UUID;
 import android.bluetooth.BluetoothAdapter;
@@ -121,7 +122,7 @@ public class BluetoothConnection {
      */
     private void connectionFailed() {
         // Start the service over to restart listening mode
-        BluetoothConnection.this.start();
+        connect();
     }
     
     /**
@@ -176,6 +177,7 @@ public class BluetoothConnection {
                     Log.e("Exception!", "unable to close() " + mSocketType +
                             " socket during connection failure", e2);
                 }
+                Log.e("Exception!", e.toString());
                 connectionFailed();
                 return;
             }
@@ -235,7 +237,8 @@ public class BluetoothConnection {
                 	if (mmInStream.available() > 0) {
                 		bytes = mmInStream.read(buffer);
 	                    if (bytes > 0) {
-	                  //  	Log.v("BYTES:", new String(buffer, "ASCII"));
+	                    	Log.v("BYTES:", new String(buffer, "ASCII"));
+	                    	Log.v("Encrypted:", new BigInteger(1, buffer).toString(16));
 	                    }
                 	}
                 } catch (IOException e) {
@@ -247,7 +250,7 @@ public class BluetoothConnection {
                 }
             }
         }
-
+       
         /**
          * Write to the connected OutStream.
          * @param buffer  The bytes to write
@@ -269,7 +272,7 @@ public class BluetoothConnection {
             }
         }
     }
-	
+
 	// XXX: Don't extend Thread! Look into runnable/callable
 	/*private class ConnectThread extends Thread {
 	    private final BluetoothSocket mmSocket;
@@ -477,7 +480,7 @@ public class BluetoothConnection {
         setState(STATE_CONNECTING);
         while(getState() != STATE_CONNECTED);
         Log.v("Done", "DOOOONE");
-        //byte t[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+        byte t[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g'};
         //write(t);
         
 		//connectThread = new ConnectThread(targetDevice);

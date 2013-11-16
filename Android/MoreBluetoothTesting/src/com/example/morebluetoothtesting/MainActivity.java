@@ -3,6 +3,7 @@ package com.example.morebluetoothtesting;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.UUID;
 
 import javax.crypto.Cipher;
@@ -27,21 +28,25 @@ public class MainActivity extends Activity {
 	
 	
 	/* XXX: Create a datastructure for storing this lock info, eventually load from file/DB */
-	String knownLocks[] = { "RNBT-A70E" };
-	String passCodes[] = { "yoopenthedoor" };
+	private String knownLocks[] = { "RNBT-A70E" };
+	private String passCodes[] = { "yoopenthedoor" };
 	
-	byte keys[][] =
+	private byte keys[][] =
 		{{
 		    0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
 		    0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
 		    0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
 		    0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
 		}};
+	
+	private byte encryptedPacket[] = {};
 	 
 	private byte[] encryptData(byte[] key, byte[] data, byte[] encryptedData) {
 			byte[] encrypted = {};
+			byte[] paddedData = new byte [data.length + 16 - data.length%16];	// pad to 16 byte block size
 			Cipher cipher = null;
 	        SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
+	        System.arraycopy(data, 0, paddedData, 0, data.length);
 	        
 	        try {
 	        	cipher = Cipher.getInstance("AES/ECB/NoPadding");
@@ -50,7 +55,7 @@ public class MainActivity extends Activity {
 	        	cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
 			} catch (Exception e) { Log.e("Error!", e.toString()); }
 	        try {
-	        	encrypted = cipher.doFinal(data);
+	        	encrypted = cipher.doFinal(paddedData);
 			} catch (Exception e) { Log.e("Error!", e.toString()); }
 	        
 	        try {
@@ -59,7 +64,7 @@ public class MainActivity extends Activity {
 	        } catch (Exception e) { Log.e("Error!", e.toString()); }
 	        
 	        encryptedData = encrypted;
-	        
+	       
 	        return encrypted;
 	}
 
@@ -68,23 +73,26 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		final byte encryptedPacket[] = {};
-
 		Button loggingButton = (Button) findViewById(R.id.button1);
         loggingButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				BluetoothConnection btConnection = new BluetoothConnection(knownLocks[0]);
 				btConnection.connect();
+				
 				try {
-					encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
+					encryptedPacket = encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				//byte t[] = {'y', 'o', 'o', 'p', 'e', 'n', 't', 'h', 'e', 'd', 'o', 'o', 'r', 0, 0, 0};
+				Log.v("Encrypted:", new BigInteger(1, encryptedPacket).toString(16));
 				btConnection.write(encryptedPacket);
+				//btConnection.write(encryptedPacket);
+				
 				/*IntentFilter filter = new IntentFilter();
 				filter.addAction(BluetoothDevice.ACTION_FOUND);
 				filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
 				filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-
 				registerReceiver(btConnection.mReceiver, filter);*/
 			}
 		});
