@@ -59,8 +59,8 @@ public class MainActivity extends Activity {
 			} catch (Exception e) { Log.e("Error!", e.toString()); }
 	        
 	        try {
-		        Log.v("Raw: ", new String(data, "ASCII"));
-		        Log.v("Encrypted: ", new String(encrypted, "ASCII"));
+		        //Log.v("Raw: ", new String(data, "ASCII"));
+		        //Log.v("Encrypted: ", new String(encrypted, "ASCII"));
 	        } catch (Exception e) { Log.e("Error!", e.toString()); }
 	        
 	        encryptedData = encrypted;
@@ -84,10 +84,34 @@ public class MainActivity extends Activity {
 					encryptedPacket = encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
 				
-				//byte t[] = {'y', 'o', 'o', 'p', 'e', 'n', 't', 'h', 'e', 'd', 'o', 'o', 'r', 0, 0, 0};
 				Log.v("Encrypted:", new BigInteger(1, encryptedPacket).toString(16));
 				btConnection.write(encryptedPacket);
-				//btConnection.write(encryptedPacket);
+				
+				/*IntentFilter filter = new IntentFilter();
+				filter.addAction(BluetoothDevice.ACTION_FOUND);
+				filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+				filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+				registerReceiver(btConnection.mReceiver, filter);*/
+			}
+		});
+       
+        Button initButton = (Button) findViewById(R.id.button2);
+        initButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				BluetoothConnection btConnection = new BluetoothConnection(knownLocks[0]);
+				btConnection.connect();
+				
+				byte initSeq[] = {'1', '2', '3', '4', '5', '6', '7', '8' };
+				btConnection.write(initSeq);
+				btConnection.write32(passCodes[0].getBytes());
+				btConnection.write(keys[0]);
+				
+				try {
+					encryptedPacket = encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				btConnection.write(encryptedPacket);
 				
 				/*IntentFilter filter = new IntentFilter();
 				filter.addAction(BluetoothDevice.ACTION_FOUND);

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 import android.bluetooth.BluetoothAdapter;
@@ -116,6 +117,27 @@ public class BluetoothConnection {
         r.write(out);
     }
     
+    /**
+     * Write to the ConnectedThread in an unsynchronized manner
+     * Padded out to 32 bytes
+     * @param out The bytes to write
+     * @see ConnectedThread#write(byte[])
+     */
+    public void write32(byte[] out) {
+        // Create temporary object
+        ConnectedThread r;
+        // Synchronize a copy of the ConnectedThread
+        synchronized (this) {
+            if (mState != STATE_CONNECTED) return;
+            r = mConnectedThread;
+        }
+        // Perform the write unsynchronized
+        r.write(out);
+        byte padding[] = new byte[32 - out.length];
+        Arrays.fill(padding, (byte) 0);
+        r.write(padding);
+    }
+    
 
     /**
      * Indicate that the connection attempt failed and notify the UI Activity.
@@ -156,7 +178,7 @@ public class BluetoothConnection {
             }
             mmSocket = tmp;
         }
-
+        
         public void run() {
             Log.i("Infoooo", "BEGIN mConnectThread SocketType:" + mSocketType);
             setName("ConnectThread" + mSocketType);
@@ -238,7 +260,6 @@ public class BluetoothConnection {
                 		bytes = mmInStream.read(buffer);
 	                    if (bytes > 0) {
 	                    	Log.v("BYTES:", new String(buffer, "ASCII"));
-	                    	Log.v("Encrypted:", new BigInteger(1, buffer).toString(16));
 	                    }
                 	}
                 } catch (IOException e) {
