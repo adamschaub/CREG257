@@ -72,29 +72,52 @@ void initLock(void)
 	digitalWrite(LOCKED_PIN, HIGH);
 	digitalWrite(UNLOCKED_PIN, HIGH);
 
-	do {
-		getData(8);
-	} while (!checkData(inBytes, passcode, 8));
-//	Serial.write("Got:");
-//	Serial.write((uint8_t *) inBytes, 8);
-	
-	getData(32);
-	for (int i=0; i<32; i++) {
-		if (inBytes[i] == 0) {
-			passcodeLen = i-1;
-			break;
+	/* If we don't have a key/passcode yet... */
+	if (EEPROM.read(0) == 255) {
+		do {
+			getData(8);
+		} while (!checkData(inBytes, passcode, 8));
+		Serial.write("Got:");
+		Serial.write((uint8_t *) inBytes, 8);
+		
+		getData(32);
+		for (int i=0; i<32; i++) {
+			if (inBytes[i] == 0) {
+				passcodeLen = i-1;
+				EEPROM.write(0, passcodeLen);
+				break;
+			}
+			passcode[i] = inBytes[i];
+			EEPROM.write(1+i, passcode[i]);
 		}
-		passcode[i] = inBytes[i];
+		Serial.write("Passcode:");
+		Serial.write((uint8_t *) passcode, passcodeLen);
+
+		getData(32);
+		for (int i=0; i<32; i++) {
+			key[i] = inBytes[i];
+			EEPROM.write(1+passcodeLen+i, key[i]);
+		}
+
+		Serial.write("Key:");
+		Serial.write((uint8_t *) key, 32);
+	} else {
+		Serial.write("Got somethin:");
+		passcodeLen = EEPROM.read(0);
+		Serial.write(passcodeLen);
+		Serial.write(passcodeLen);
+		Serial.write(passcodeLen);
+		Serial.write(passcodeLen);
+		Serial.write(passcodeLen);
+		Serial.write(passcodeLen);
+		for (int i=0; i<passcodeLen; i++)
+			passcode[i] = EEPROM.read(1+i);
+		for (int i=0; i<32; i++)
+			key[i] = EEPROM.read(1+passcodeLen+i);
+
+		Serial.write("Passcode:");
+		Serial.write((uint8_t *) passcode, passcodeLen);
 	}
-//	Serial.write("Passcode:");
-//	Serial.write((uint8_t *) passcode, passcodeLen);
-
-	getData(32);
-	for (int i=0; i<32; i++)
-		key[i] = inBytes[i];
-
-//	Serial.write("Key:");
-//	Serial.write((uint8_t *) key, 32);
 
 	state = STATE_LOCKED;
 	digitalWrite(UNLOCKED_PIN, LOW);

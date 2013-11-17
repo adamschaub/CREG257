@@ -74,7 +74,7 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		Button loggingButton = (Button) findViewById(R.id.button1);
+		/*Button loggingButton = (Button) findViewById(R.id.button1);
         loggingButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -94,10 +94,10 @@ public class MainActivity extends Activity {
 				filter.addAction(BluetoothDevice.ACTION_FOUND);
 				filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
 				filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-				registerReceiver(btConnection.mReceiver, filter);*/
+				registerReceiver(btConnection.mReceiver, filter);*
 			}
-		});
-     
+		});*/
+
         Button initButton = (Button) findViewById(R.id.button2);
         initButton.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -136,7 +136,7 @@ public class MainActivity extends Activity {
 				btConnection.write(encryptedPacket);
 			}
 		});
-        
+       
         Button unlockButton = (Button) findViewById(R.id.button4);
         unlockButton.setOnClickListener(new View.OnClickListener() {
 			@Override
