@@ -26,7 +26,6 @@ import android.widget.Button;
 
 public class MainActivity extends Activity {
 	
-	
 	/* XXX: Create a datastructure for storing this lock info, eventually load from file/DB */
 	private String knownLocks[] = { "RNBT-A70E" };
 	private String passCodes[] = { "yoopenthedoor" };
@@ -40,6 +39,8 @@ public class MainActivity extends Activity {
 		}};
 	
 	private byte encryptedPacket[] = {};
+	
+	private BluetoothConnection btConnection = null;
 	 
 	private byte[] encryptData(byte[] key, byte[] data, byte[] encryptedData) {
 			byte[] encrypted = {};
@@ -77,8 +78,10 @@ public class MainActivity extends Activity {
         loggingButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				BluetoothConnection btConnection = new BluetoothConnection(knownLocks[0]);
-				btConnection.connect();
+				if (btConnection == null) {
+					btConnection = new BluetoothConnection(knownLocks[0]);
+					btConnection.connect();
+				}
 				
 				try {
 					encryptedPacket = encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
@@ -94,18 +97,31 @@ public class MainActivity extends Activity {
 				registerReceiver(btConnection.mReceiver, filter);*/
 			}
 		});
-       
+     
         Button initButton = (Button) findViewById(R.id.button2);
         initButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				BluetoothConnection btConnection = new BluetoothConnection(knownLocks[0]);
-				btConnection.connect();
+				if (btConnection == null) {
+					btConnection = new BluetoothConnection(knownLocks[0]);
+					btConnection.connect();
+				}
 				
 				byte initSeq[] = {'1', '2', '3', '4', '5', '6', '7', '8' };
 				btConnection.write(initSeq);
 				btConnection.write32(passCodes[0].getBytes());
 				btConnection.write(keys[0]);
+			}
+		});
+        
+        Button lockButton = (Button) findViewById(R.id.button3);
+        lockButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (btConnection == null) {
+					btConnection = new BluetoothConnection(knownLocks[0]);
+					btConnection.connect();
+				}
 				
 				try {
 					encryptedPacket = encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
@@ -113,11 +129,34 @@ public class MainActivity extends Activity {
 				
 				btConnection.write(encryptedPacket);
 				
-				/*IntentFilter filter = new IntentFilter();
-				filter.addAction(BluetoothDevice.ACTION_FOUND);
-				filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-				filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-				registerReceiver(btConnection.mReceiver, filter);*/
+				try {
+					encryptedPacket = encryptData(keys[0], "asdasd".getBytes("ASCII"), encryptedPacket);
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				btConnection.write(encryptedPacket);
+			}
+		});
+        
+        Button unlockButton = (Button) findViewById(R.id.button4);
+        unlockButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (btConnection == null) {
+					btConnection = new BluetoothConnection(knownLocks[0]);
+					btConnection.connect();
+				}
+				
+				try {
+					encryptedPacket = encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				btConnection.write(encryptedPacket);
+				
+				try {
+					encryptedPacket = encryptData(keys[0], "dsadsa".getBytes("ASCII"), encryptedPacket);
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				btConnection.write(encryptedPacket);
 			}
 		});
 	}

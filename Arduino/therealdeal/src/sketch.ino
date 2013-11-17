@@ -1,30 +1,32 @@
+#include <EEPROM.h>
 #include "AES.h"
+
+#define KEY_SIZE (256/8)    // int is (I believe) 8 bits, so use byte size instead of bit size
+#define LOCKED_PIN 		12
+#define UNLOCKED_PIN	8
+#define STATE_LOCKED	0
+#define STATE_UNLOCKED	1
 
 AES aes;
 
-#define KEY_SIZE (256/8)    // int is (I believe) 8 bits, so use byte size instead of bit size
-
-/*byte key[] =
-{
-    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-};*/
-
 byte key[32];
 uint8_t inBytes[32];
-uint8_t passcode[32] = {'1', '2', '3', '4', '5', '6', '7', '8'};
+uint8_t passcode[32] = {'1', '2', '3', '4', '5', '6', '7', '8'};	// initially set to init sequence
 uint8_t passcodeLen;
+
+uint8_t state;
 
 void initLock(void);
 void getData(int);
-int checkData(uint8_t *, int);
+int checkData(uint8_t *, uint8_t *, int);
 
 void setup()
 {
 	Serial.begin(115200);
 	pinMode(13, OUTPUT);
+	pinMode(LOCKED_PIN, OUTPUT);
+	pinMode(UNLOCKED_PIN, OUTPUT);
+
 	digitalWrite(13, LOW);
 
 	initLock();
@@ -40,9 +42,24 @@ void loop()
 	getData(16);
 	aes.decrypt(inBytes, decrypted);
 	
-	if (checkData(decrypted, passcodeLen)) {
-		digitalWrite(13, HIGH);
+	if (checkData(decrypted, passcode, passcodeLen)) {
+		digitalWrite(UNLOCKED_PIN, HIGH);
+		digitalWrite(LOCKED_PIN, LOW);
+		Serial.write("ACK");	// send three, so hopefully one ends up in the read buffer on phone completely...
 		Serial.write("ACK");
+		Serial.write("ACK");
+		getData(16);
+		aes.decrypt(inBytes, decrypted);
+		if (checkData(decrypted, (uint8_t *) "asdasd", 6)) {
+			digitalWrite(UNLOCKED_PIN, LOW);
+			digitalWrite(LOCKED_PIN, HIGH);
+		} else if (checkData(decrypted, (uint8_t *) "dsadsa", 6)) {
+			digitalWrite(UNLOCKED_PIN, HIGH);
+			digitalWrite(LOCKED_PIN, LOW);
+		} else {
+			Serial.write("NAK");
+			Serial.write((uint8_t *) inBytes, 16);
+		}
 	} else {
 		Serial.write("NAK");
 		Serial.write((uint8_t *) inBytes, 16);
@@ -51,9 +68,15 @@ void loop()
 
 void initLock(void)
 {
+	/* Both LEDs on to indicate uninitialized state */
+	digitalWrite(LOCKED_PIN, HIGH);
+	digitalWrite(UNLOCKED_PIN, HIGH);
+
 	do {
 		getData(8);
-	} while (!checkData(inBytes, 8));
+	} while (!checkData(inBytes, passcode, 8));
+//	Serial.write("Got:");
+//	Serial.write((uint8_t *) inBytes, 8);
 	
 	getData(32);
 	for (int i=0; i<32; i++) {
@@ -63,10 +86,18 @@ void initLock(void)
 		}
 		passcode[i] = inBytes[i];
 	}
+//	Serial.write("Passcode:");
+//	Serial.write((uint8_t *) passcode, passcodeLen);
 
 	getData(32);
 	for (int i=0; i<32; i++)
 		key[i] = inBytes[i];
+
+//	Serial.write("Key:");
+//	Serial.write((uint8_t *) key, 32);
+
+	state = STATE_LOCKED;
+	digitalWrite(UNLOCKED_PIN, LOW);
 }
 
 void getData(int bytesToGet)
@@ -79,10 +110,10 @@ void getData(int bytesToGet)
 }
 
 /* Returns 1 if equal, 0 otherwise */
-int checkData(uint8_t *received, int len)
+int checkData(uint8_t *received, uint8_t *target, int len)
 {
 	for (int i=0; i<len; i++) {
-		if (received[i] != passcode[i])
+		if (received[i] != target[i])
 			return 0;
 	}
 

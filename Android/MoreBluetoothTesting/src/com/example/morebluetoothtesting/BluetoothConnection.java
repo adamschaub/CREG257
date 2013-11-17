@@ -259,7 +259,7 @@ public class BluetoothConnection {
                 	if (mmInStream.available() > 0) {
                 		bytes = mmInStream.read(buffer);
 	                    if (bytes > 0) {
-	                    	Log.v("BYTES:", new String(buffer, "ASCII"));
+	                    	Log.v("BYTES:", new String(buffer, 0, bytes, "ASCII"));
 	                    }
                 	}
                 } catch (IOException e) {
@@ -271,7 +271,7 @@ public class BluetoothConnection {
                 }
             }
         }
-       
+      
         /**
          * Write to the connected OutStream.
          * @param buffer  The bytes to write
