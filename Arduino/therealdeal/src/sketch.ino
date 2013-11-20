@@ -43,8 +43,6 @@ void loop()
 	aes.decrypt(inBytes, decrypted);
 	
 	if (checkData(decrypted, passcode, passcodeLen)) {
-		digitalWrite(UNLOCKED_PIN, HIGH);
-		digitalWrite(LOCKED_PIN, LOW);
 		Serial.write("ACK");	// send three, so hopefully one ends up in the read buffer on phone completely...
 		Serial.write("ACK");
 		Serial.write("ACK");
@@ -58,10 +56,13 @@ void loop()
 			digitalWrite(LOCKED_PIN, LOW);
 		} else {
 			Serial.write("NAK");
-			Serial.write((uint8_t *) inBytes, 16);
+			Serial.write("BAD COMMAND BAD COMMAND");
+			Serial.write((uint8_t *) decrypted, 16);
+			Serial.write((uint8_t *) inBytes, 6);
 		}
 	} else {
 		Serial.write("NAK");
+		Serial.write("BAD KEY BAD KEY BAD KEY");
 		Serial.write((uint8_t *) inBytes, 16);
 	}
 }
@@ -72,8 +73,10 @@ void initLock(void)
 	digitalWrite(LOCKED_PIN, HIGH);
 	digitalWrite(UNLOCKED_PIN, HIGH);
 
+	passcodeLen = EEPROM.read(0);
+
 	/* If we don't have a key/passcode yet... */
-	if (EEPROM.read(0) == 255) {
+	if (passcodeLen == 255) {
 		do {
 			getData(8);
 		} while (!checkData(inBytes, passcode, 8));
