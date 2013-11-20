@@ -501,8 +501,6 @@ public class BluetoothConnection {
         setState(STATE_CONNECTING);
         while(getState() != STATE_CONNECTED);
         Log.v("Done", "DOOOONE");
-        byte t[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g'};
-        //write(t);
         
 		//connectThread = new ConnectThread(targetDevice);
 		//connectThread.start();

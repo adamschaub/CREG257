@@ -41,4 +41,13 @@
         android:layout_alignLeft="@+id/lockButtonId"
         android:text="Share Key" />
 
+    <Button
+        android:id="@+id/delButtonId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/lockButtonId"
+        android:layout_below="@+id/lockButtonId"
+        android:layout_marginTop="68dp"
+        android:text="Delete Lock Files" />
+
 </RelativeLayout>

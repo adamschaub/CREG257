@@ -5,15 +5,14 @@ import java.io.FileNotFoundException;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
-import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 /* Very simple ContentProvider, for serving up the key/pass files to an email app.
- * Assumes the key/pass are in the file "tmpfile.phnky".
- */
+* Assumes the key/pass are in the file "tmpfile.phnky".
+*/
 
 public class KeyPassFileProvider extends ContentProvider {
 
@@ -27,14 +26,14 @@ public class KeyPassFileProvider extends ContentProvider {
     public ParcelFileDescriptor openFile(Uri uri, String mode)
             throws FileNotFoundException {
 
-    	File f = new File(getContext().getFilesDir(), "tmpfile.phnky");
-    	ParcelFileDescriptor pfd = null;
-    	try {
-    		ParcelFileDescriptor tmp = ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
-    		pfd = tmp;
-    	} catch (Exception e) { Log.e("Error!", e.toString()); }
-    	
-    	return pfd;
+            File f = new File(getContext().getFilesDir(), "tmpfile.phnky");
+            ParcelFileDescriptor pfd = null;
+            try {
+                    ParcelFileDescriptor tmp = ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
+                    pfd = tmp;
+            } catch (Exception e) { Log.e("Error!", e.toString()); }
+            
+            return pfd;
     }
   
     @Override
