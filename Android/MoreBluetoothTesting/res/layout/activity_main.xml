@@ -9,14 +9,14 @@
     tools:context=".MainActivity" >
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/initButtonId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:text="Initialize" />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/lockButtonId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
@@ -24,12 +24,21 @@
         android:text="Lock" />
 
     <Button
-        android:id="@+id/button4"
+        android:id="@+id/unlockButtonId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/button3"
-        android:layout_alignBottom="@+id/button3"
-        android:layout_alignRight="@+id/button2"
+        android:layout_alignBaseline="@+id/lockButtonId"
+        android:layout_alignBottom="@+id/lockButtonId"
+        android:layout_alignRight="@+id/initButtonId"
         android:text="Unlock" />
+
+    <Button
+        android:id="@+id/shareKeyButtonId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/initButtonId"
+        android:layout_alignBottom="@+id/initButtonId"
+        android:layout_alignLeft="@+id/lockButtonId"
+        android:text="Share Key" />
 
 </RelativeLayout>

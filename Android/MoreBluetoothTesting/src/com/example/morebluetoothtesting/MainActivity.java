@@ -1,5 +1,7 @@
 package com.example.morebluetoothtesting;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,11 +12,13 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
@@ -98,7 +102,7 @@ public class MainActivity extends Activity {
 			}
 		});*/
 
-        Button initButton = (Button) findViewById(R.id.button2);
+        Button initButton = (Button) findViewById(R.id.initButtonId);
         initButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -114,7 +118,7 @@ public class MainActivity extends Activity {
 			}
 		});
         
-        Button lockButton = (Button) findViewById(R.id.button3);
+        Button lockButton = (Button) findViewById(R.id.lockButtonId);
         lockButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -123,12 +127,14 @@ public class MainActivity extends Activity {
 					btConnection.connect();
 				}
 				
+				/* Send the encrypted passcode */
 				try {
 					encryptedPacket = encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
 				
 				btConnection.write(encryptedPacket);
 				
+				/* Send the encrypted lock command */
 				try {
 					encryptedPacket = encryptData(keys[0], "asdasd".getBytes("ASCII"), encryptedPacket);
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
@@ -136,8 +142,10 @@ public class MainActivity extends Activity {
 				btConnection.write(encryptedPacket);
 			}
 		});
+        
+        
        
-        Button unlockButton = (Button) findViewById(R.id.button4);
+        Button unlockButton = (Button) findViewById(R.id.unlockButtonId);
         unlockButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -146,12 +154,14 @@ public class MainActivity extends Activity {
 					btConnection.connect();
 				}
 				
+				/* Send the encrypted passcode */
 				try {
 					encryptedPacket = encryptData(keys[0], passCodes[0].getBytes("ASCII"), encryptedPacket);
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
 				
 				btConnection.write(encryptedPacket);
 				
+				/* Send the encrypted unlock command */
 				try {
 					encryptedPacket = encryptData(keys[0], "dsadsa".getBytes("ASCII"), encryptedPacket);
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
@@ -159,6 +169,33 @@ public class MainActivity extends Activity {
 				btConnection.write(encryptedPacket);
 			}
 		});
+        
+        Button shareButton = (Button) findViewById(R.id.shareKeyButtonId);
+        shareButton.setOnClickListener(new View.OnClickListener () {
+        	public void onClick(View v) {
+        		/* Create file in internal storage (i.e., it's private to our app) */
+        		String filename = "tmpfile.phnky";
+        		File file = new File(getBaseContext().getFilesDir(), filename);
+        		FileOutputStream outputStream;
+
+        		try {
+	        		outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
+	        		outputStream.write("This is my exciting file!".getBytes());
+	        		outputStream.close();
+        		} catch (Exception e) { Log.e("Error!", e.toString()); }
+        		
+        		/* Send email, with tmpfile.phnky attached */
+        		Intent sendIntent;
+
+        		sendIntent = new Intent(Intent.ACTION_SEND);
+        		sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Super secret email!");
+        		sendIntent.putExtra(Intent.EXTRA_TEXT, "Super secret text!");
+        		sendIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse("content://" + "com.example.morebluetoothtesting.provider" + "/" + file.getPath()));
+        		sendIntent.setType("text/plain");
+
+        		startActivity(Intent.createChooser(sendIntent, "Send Mail"));
+        	}
+        });
 	}
 
 	@Override
