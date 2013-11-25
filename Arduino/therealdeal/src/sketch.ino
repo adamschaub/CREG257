@@ -6,6 +6,10 @@
 #define UNLOCKED_PIN	8
 #define STATE_LOCKED	0
 #define STATE_UNLOCKED	1
+#define	EN12			2	// Enable H-bridge outputs 1 and 2
+#define A1				3	// H-bridge control 1A
+#define A2				4	// H-bridge control 2A
+#define MOTOR_READING	5	// analog input for reading motor current draw
 
 AES aes;
 
@@ -26,6 +30,12 @@ void setup()
 	pinMode(13, OUTPUT);
 	pinMode(LOCKED_PIN, OUTPUT);
 	pinMode(UNLOCKED_PIN, OUTPUT);
+
+	pinMode(EN12, OUTPUT);  // 1,2EN pin
+    pinMode(A1, OUTPUT);    // 1A pin
+    pinMode(A2, OUTPUT);    // 2A pin
+    digitalWrite(EN12, HIGH);   // Enable
+	analogWrite()
 
 	digitalWrite(13, LOW);
 
@@ -49,11 +59,13 @@ void loop()
 		getData(16);
 		aes.decrypt(inBytes, decrypted);
 		if (checkData(decrypted, (uint8_t *) "asdasd", 6)) {
-			digitalWrite(UNLOCKED_PIN, LOW);
-			digitalWrite(LOCKED_PIN, HIGH);
+//	digitalWrite(UNLOCKED_PIN, LOW);
+//	digitalWrite(LOCKED_PIN, HIGH);
+			lock();
 		} else if (checkData(decrypted, (uint8_t *) "dsadsa", 6)) {
-			digitalWrite(UNLOCKED_PIN, HIGH);
-			digitalWrite(LOCKED_PIN, LOW);
+//	digitalWrite(UNLOCKED_PIN, HIGH);
+//	digitalWrite(LOCKED_PIN, LOW);
+			unlock();
 		} else {
 			Serial.write("NAK");
 			Serial.write("BAD COMMAND BAD COMMAND");
@@ -113,6 +125,50 @@ void initLock(void)
 
 	state = STATE_LOCKED;
 	digitalWrite(UNLOCKED_PIN, LOW);
+}
+
+void unlock(void)
+{
+	int numHundreds = 0;	// keep track of how many current readings in a row are > 100
+
+	digitalWrite(A1, LOW);	// spin motor one way...
+    digitalWrite(A2, HIGH);
+    delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
+	while (1) {
+		if (analogRead(MOTOR_INPUT) > 100)
+			numHundreds++;
+		else
+			numHundreds = 0;
+		if (numHundreds == 2)
+			break;
+	}
+	digitalWrite(A1, LOW);	// turn motor off
+    digitalWrite(A2, LOW);
+
+	digitalWrite(UNLOCKED_PIN, HIGH);	// set LEDs accordingly
+	digitalWrite(LOCKED_PIN, LOW);
+}
+
+void lock(void)
+{
+	int numHundreds = 0;	// keep track of how many current readings in a row are > 100
+
+	digitalWrite(A1, HIGH);	// spin motor one way...
+    digitalWrite(A2, LOW);
+    delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
+	while (1) {
+		if (analogRead(MOTOR_INPUT) > 100)
+			numHundreds++;
+		else
+			numHundreds = 0;
+		if (numHundreds == 2)
+			break;
+	}
+	digitalWrite(A1, LOW);	// turn motor off
+    digitalWrite(A2, LOW);
+
+	digitalWrite(UNLOCKED_PIN, LOW);	// set LEDs accordingly
+	digitalWrite(LOCKED_PIN, HIGH);
 }
 
 void getData(int bytesToGet)
