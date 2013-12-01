@@ -9,6 +9,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -76,7 +78,11 @@ public class MainActivity extends Activity {
 			sensorManager = (SensorManager)getBaseContext().getSystemService(Context.SENSOR_SERVICE);
 	        if ((mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)) != null) {
 	        	Log.v("Success!", "There is a magnetomter!");
-	        	sensorManager.registerListener(magListener, mag, SensorManager.SENSOR_DELAY_FASTEST);
+	        	//sensorManager.registerListener(magListener, mag, SensorManager.SENSOR_DELAY_FASTEST);
+	        	HandlerThread hThread = new HandlerThread("hThread");
+	        	hThread.start();
+	        	Handler h = new Handler(hThread.getLooper());
+	        	sensorManager.registerListener(magListener, mag, SensorManager.SENSOR_DELAY_FASTEST, h);
 	        } else {
 	        	Log.v("Failure!", "There is no magnetomter!");
 	        }
@@ -111,7 +117,7 @@ public class MainActivity extends Activity {
 				if (btConnection == null) {
 					btConnection = new BluetoothConnection(currentKpd.lockName);
 					btConnection.connect();
-				}
+				} 
 
 				/* Send the encrypted passcode */
 				try {
@@ -121,34 +127,62 @@ public class MainActivity extends Activity {
 				btConnection.write(encryptedPacket);
 				
 				/* Wait for response... */
-				synchronized (btConnection) {
+				synchronized (btConnection.mConnectedThread) {
 					try {
-						btConnection.wait(1000);
+						btConnection.mConnectedThread.wait(1000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				response = btConnection.getResponse();
 				Log.v("RESPONSE:", response + "");
 				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
 					return;
-				
+			
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
-						magListener.wait(1000);
+						magListener.wait(100000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				byte micData[] = magListener.getData();
 				try {
 					Log.v("Got from MI:", new String(micData, 0, 8, "ASCII"));
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
-			
+				
 				/* Send what we just received over MI */
 				btConnection.write(micData);
 			
-				/* Wait for response... */
-				synchronized (btConnection) {
+				/* Now wait for the MI challenge */	
+				synchronized (magListener) {
 					try {
-						btConnection.wait(1000);
+						magListener.wait(100000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				micData = magListener.getData();
+				try {
+					Log.v("Got from MI:", new String(micData, 0, 8, "ASCII"));
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				/* Send what we just received over MI */
+				btConnection.write(micData);
+				
+				/* Now wait for the MI challenge */	
+				synchronized (magListener) {
+					try {
+						magListener.wait(100000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				micData = magListener.getData();
+				try {
+					Log.v("Got from MI:", new String(micData, 0, 8, "ASCII"));
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				/* Send what we just received over MI */
+				btConnection.write(micData);
+				
+				/* Wait for response... */
+				synchronized (btConnection.mConnectedThread) {
+					try {
+						btConnection.mConnectedThread.wait(100000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				response = btConnection.getResponse();
@@ -184,41 +218,69 @@ public class MainActivity extends Activity {
 				btConnection.write(encryptedPacket);
 				
 				/* Wait for response... */
-				synchronized (btConnection) {
+				synchronized (btConnection.mConnectedThread) {
 					try {
-						btConnection.wait(1000);
+						btConnection.mConnectedThread.wait(100000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				response = btConnection.getResponse();
 				Log.v("RESPONSE:", response + "");
 				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
 					return;
-				
+			
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
-						magListener.wait(1000);
+						magListener.wait(100000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				byte micData[] = magListener.getData();
 				try {
 					Log.v("Got from MI:", new String(micData, 0, 8, "ASCII"));
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
-			
+		
 				/* Send what we just received over MI */
 				btConnection.write(micData);
 				
-				/* Wait for response... */
-				synchronized (btConnection) {
+				/* Now wait for the MI challenge */	
+				synchronized (magListener) {
 					try {
-						btConnection.wait(1000);
+						magListener.wait(100000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				micData = magListener.getData();
+				try {
+					Log.v("Got from MI:", new String(micData, 0, 8, "ASCII"));
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				/* Send what we just received over MI */
+				btConnection.write(micData);
+				
+				/* Now wait for the MI challenge */	
+				synchronized (magListener) {
+					try {
+						magListener.wait(100000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				micData = magListener.getData();
+				try {
+					Log.v("Got from MI:", new String(micData, 0, 8, "ASCII"));
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+				
+				/* Send what we just received over MI */
+				btConnection.write(micData);
+			
+				/* Wait for response... */
+				synchronized (btConnection.mConnectedThread) {
+					try {
+						btConnection.mConnectedThread.wait(100000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				response = btConnection.getResponse();
 				Log.v("RESPONSE:", response + "");
 				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
 					return;
-				
+		
 				/* Send the encrypted unlock command */
 				try {
 					encryptedPacket = encryptData(currentKpd.key, "dsadsa".getBytes("ASCII"), encryptedPacket);

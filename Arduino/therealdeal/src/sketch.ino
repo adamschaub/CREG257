@@ -59,6 +59,7 @@ void loop()
 {
 	uint8_t decrypted[16];
 	uint8_t inByte;
+	uint8_t numValid;	// how many valid responses to the MI challenge did we get?
 
 	/* Get encrypted passcode... */
 	getData(16);
@@ -66,26 +67,38 @@ void loop()
 	
 	/* If passcode was correct, then continue */
 	if (checkData(decrypted, passcode, passcodeLen)) {
-		Serial.write("ACK");	// send three, so hopefully one ends up in the read buffer on phone completely...
-		Serial.write("ACK");
+		Serial.write("ACK");	// send two, so hopefully one ends up in the read buffer on phone completely...
 		Serial.write("ACK");
 
 		/* After sending ACK, send the MI challenge and then wait for it to be echoed back */
 		sendMIChallenge((uint8_t *) "ABCDEFGH");	// send challenge over MI
 		getData(8);
+		numValid = checkData(inBytes, (uint8_t *) "ABCDEFGH", 8);
+		sendMIChallenge((uint8_t *) "ABCDEFGH");	// send challenge over MI
+		getData(8);
+		numValid += checkData(inBytes, (uint8_t *) "ABCDEFGH", 8);
+		sendMIChallenge((uint8_t *) "ABCDEFGH");	// send challenge over MI
+		getData(8);
+		numValid += checkData(inBytes, (uint8_t *) "ABCDEFGH", 8);
 
-		/* Did we receive the same string that we sent over MI? */
-		if (checkData(inBytes, (uint8_t *) "ABCDEFGH", 8)) {
-			
+		/* Was at least one response valid? */
+		if (numValid > 0) {
+
 			/* Yup, so wait for command (lock/unlock) now */
+			Serial.write("ACK");
+			Serial.write("ACK");
 			getData(16);
 			aes.decrypt(inBytes, decrypted);
+
 			if (checkData(decrypted, (uint8_t *) "asdasd", 6)) {
 				lock();
+				Serial.write("ACK");
+				Serial.write("ACK");
 			} else if (checkData(decrypted, (uint8_t *) "dsadsa", 6)) {
 				unlock();
+				Serial.write("ACK");
+				Serial.write("ACK");
 			} else {
-				Serial.write("NAK");
 				Serial.write("NAK");
 				Serial.write("NAK");
 				Serial.write("BAD COMMAND BAD COMMAND");
@@ -96,16 +109,15 @@ void loop()
 		} else {	/* Nope, send a NAK */
 			Serial.write("NAK");
 			Serial.write("NAK");
-			Serial.write("NAK");
 			Serial.write("BAD RESPONSE BAD RESPONSE");
-			Serial.write((uint8_t *) inBytes, 16);
+			Serial.write((uint8_t *) inBytes, 8);
 		}
 	} else {	/* Otherwise, send a NAK and wait for passcode again */
 		Serial.write("NAK");
 		Serial.write("NAK");
-		Serial.write("NAK");
 		Serial.write("BAD KEY BAD KEY BAD KEY");
-		Serial.write((uint8_t *) inBytes, 16);
+		//Serial.write((uint8_t *) decrypted, 16);
+		//Serial.write((uint8_t *) inBytes, 16);
 	}
 }
 

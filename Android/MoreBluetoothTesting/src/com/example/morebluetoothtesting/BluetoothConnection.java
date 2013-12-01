@@ -15,7 +15,7 @@ import android.util.Log;
 public class BluetoothConnection {
 	
 	private ConnectThread mConnectThread;
-	private ConnectedThread mConnectedThread;
+	public ConnectedThread mConnectedThread;
 	
 	private int mState;
 
@@ -30,6 +30,8 @@ public class BluetoothConnection {
     public static final int RESPONSE_NONE = 0;
     public static final int RESPONSE_NAK = 1;
     public static final int RESPONSE_ACK = 2;
+    
+    private BluetoothConnection btConnection = null;
 
 	
 	/**
@@ -189,7 +191,6 @@ public class BluetoothConnection {
         }
         
         public void run() {
-            Log.i("Infoooo", "BEGIN mConnectThread SocketType:" + mSocketType);
             setName("ConnectThread" + mSocketType);
 
             // Always cancel discovery because it will slow down a connection
@@ -236,7 +237,7 @@ public class BluetoothConnection {
      * This thread runs during a connection with a remote device.
      * It handles all incoming and outgoing transmissions.
      */
-    private class ConnectedThread extends Thread {
+    class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
@@ -428,6 +429,7 @@ public class BluetoothConnection {
 
 	public BluetoothConnection(String deviceName) {
 		this.deviceName = deviceName;
+		btConnection = this;
 	}
 	
 	// Create a BroadcastReceiver for bluetooth related checks
