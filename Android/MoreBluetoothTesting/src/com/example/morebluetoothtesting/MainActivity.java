@@ -106,6 +106,8 @@ public class MainActivity extends Activity {
         lockButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				int response;
+				
 				if (btConnection == null) {
 					btConnection = new BluetoothConnection(currentKpd.lockName);
 					btConnection.connect();
@@ -124,6 +126,10 @@ public class MainActivity extends Activity {
 						btConnection.wait(1000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
+				response = btConnection.getResponse();
+				Log.v("RESPONSE:", response + "");
+				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
+					return;
 				
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
@@ -139,6 +145,16 @@ public class MainActivity extends Activity {
 				/* Send what we just received over MI */
 				btConnection.write(micData);
 			
+				/* Wait for response... */
+				synchronized (btConnection) {
+					try {
+						btConnection.wait(1000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				response = btConnection.getResponse();
+				Log.v("RESPONSE:", response + "");
+				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
+					return;
 				
 				/* Send the encrypted lock command */
 				try {
@@ -153,6 +169,8 @@ public class MainActivity extends Activity {
         unlockButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				int response;
+				
 				if (btConnection == null) {
 					btConnection = new BluetoothConnection(currentKpd.lockName);
 					btConnection.connect();
@@ -164,7 +182,18 @@ public class MainActivity extends Activity {
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
 				
 				btConnection.write(encryptedPacket);
-	
+				
+				/* Wait for response... */
+				synchronized (btConnection) {
+					try {
+						btConnection.wait(1000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				response = btConnection.getResponse();
+				Log.v("RESPONSE:", response + "");
+				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
+					return;
+				
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
@@ -178,6 +207,17 @@ public class MainActivity extends Activity {
 			
 				/* Send what we just received over MI */
 				btConnection.write(micData);
+				
+				/* Wait for response... */
+				synchronized (btConnection) {
+					try {
+						btConnection.wait(1000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				response = btConnection.getResponse();
+				Log.v("RESPONSE:", response + "");
+				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
+					return;
 				
 				/* Send the encrypted unlock command */
 				try {

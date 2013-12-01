@@ -24,6 +24,12 @@ public class BluetoothConnection {
     public static final int STATE_LISTEN = 1;     // now listening for incoming connections
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
+    
+    private int response = RESPONSE_NONE;
+    
+    public static final int RESPONSE_NONE = 0;
+    public static final int RESPONSE_NAK = 1;
+    public static final int RESPONSE_ACK = 2;
 
 	
 	/**
@@ -73,6 +79,16 @@ public class BluetoothConnection {
      * Return the current connection state. */
     public synchronized int getState() {
         return mState;
+    }
+    
+    private synchronized void setResponse(int response) {
+    	this.response = response;
+    }
+    
+    public synchronized int getResponse() {
+    	int tmpResponse = response;
+    	setResponse(RESPONSE_NONE);
+    	return tmpResponse;
     }
 
     /**
@@ -243,6 +259,7 @@ public class BluetoothConnection {
         }
         
         public void run() {
+        	String inStr;
             byte[] buffer = new byte[1024];
             int bytes;
             // Keep listening to the InputStream while connected
@@ -252,9 +269,16 @@ public class BluetoothConnection {
                 	if (mmInStream.available() > 0) {
                 		bytes = mmInStream.read(buffer);
 	                    if (bytes > 0) {
+	                    	inStr = new String(buffer, 0, bytes, "ASCII");
 	                    	Log.v("BYTES:", new String(buffer, 0, bytes, "ASCII"));
-	                    	synchronized (this) {
-	                    		this.notify();
+	                    	if (inStr.contains("ACK") || inStr.contains("NAK")) {
+	                    		if (inStr.contains("ACK"))
+	                    			setResponse(RESPONSE_ACK);
+	                    		else
+	                    			setResponse(RESPONSE_NAK);
+		                    	synchronized (this) {
+		                    		this.notify();
+		                    	}
 	                    	}
 	                    }
                 	}
