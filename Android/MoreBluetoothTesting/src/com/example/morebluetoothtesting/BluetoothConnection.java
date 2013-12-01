@@ -1,22 +1,15 @@
 
 package com.example.morebluetoothtesting;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
 
 public class BluetoothConnection {
@@ -248,7 +241,7 @@ public class BluetoothConnection {
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
         }
-
+        
         public void run() {
             byte[] buffer = new byte[1024];
             int bytes;
@@ -260,6 +253,9 @@ public class BluetoothConnection {
                 		bytes = mmInStream.read(buffer);
 	                    if (bytes > 0) {
 	                    	Log.v("BYTES:", new String(buffer, 0, bytes, "ASCII"));
+	                    	synchronized (this) {
+	                    		this.notify();
+	                    	}
 	                    }
                 	}
                 } catch (IOException e) {
@@ -271,7 +267,7 @@ public class BluetoothConnection {
                 }
             }
         }
-      
+
         /**
          * Write to the connected OutStream.
          * @param buffer  The bytes to write
@@ -489,7 +485,7 @@ public class BluetoothConnection {
 	
 		// Cancel any thread attempting to make a connection
         if (mState == STATE_CONNECTING) {
-            if (mConnectThread != null) {mConnectThread.cancel(); mConnectThread = null;}
+            if (mConnectThread != null) {mConnectThread.cancel(); mConnectThread = null; }
         }
 
         // Cancel any thread currently running a connection
@@ -509,6 +505,6 @@ public class BluetoothConnection {
 		//acceptThread.run();
 	}
 
-	private String partnerDevAdd="00:06:66:63:A7:0E";
-	private boolean isConnected=false;
+	//private String partnerDevAdd="00:06:66:63:A7:0E";
+	//private boolean isConnected=false;
 }

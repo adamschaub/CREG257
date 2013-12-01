@@ -2,14 +2,20 @@
 #include "AES.h"
 
 #define KEY_SIZE (256/8)    // int is (I believe) 8 bits, so use byte size instead of bit size
+
 #define LOCKED_PIN 		12
 #define UNLOCKED_PIN	8
 #define STATE_LOCKED	0
 #define STATE_UNLOCKED	1
+
 #define	EN12			2	// Enable H-bridge outputs 1 and 2
 #define A1				3	// H-bridge control 1A
 #define A2				4	// H-bridge control 2A
 #define MOTOR_READING	5	// analog input for reading motor current draw
+
+#define MI_OUT_PIN		13
+#define	TRANSMIT_FREQ	101	// sampling freq of phone, in hertz
+#define PERIOD (1000000/TRANSMIT_FREQ)	// period, in us
 
 AES aes;
 
@@ -22,12 +28,17 @@ uint8_t state;
 
 void initLock(void);
 void getData(int);
+void lock(void);
+void unlock(void);
 int checkData(uint8_t *, uint8_t *, int);
+void sendMIChallenge(uint8_t *);
+void transmitData(uint8_t *);
+void transmitByte(uint8_t);
+void preamble(void);
 
 void setup()
 {
 	Serial.begin(115200);
-	pinMode(13, OUTPUT);
 	pinMode(LOCKED_PIN, OUTPUT);
 	pinMode(UNLOCKED_PIN, OUTPUT);
 
@@ -35,9 +46,9 @@ void setup()
     pinMode(A1, OUTPUT);    // 1A pin
     pinMode(A2, OUTPUT);    // 2A pin
     digitalWrite(EN12, HIGH);   // Enable
-	analogWrite()
 
-	digitalWrite(13, LOW);
+	pinMode(MI_OUT_PIN, OUTPUT);
+	digitalWrite(MI_OUT_PIN, LOW);
 
 	initLock();
 
@@ -49,30 +60,49 @@ void loop()
 	uint8_t decrypted[16];
 	uint8_t inByte;
 
+	/* Get encrypted passcode... */
 	getData(16);
 	aes.decrypt(inBytes, decrypted);
 	
+	/* If passcode was correct, then continue */
 	if (checkData(decrypted, passcode, passcodeLen)) {
 		Serial.write("ACK");	// send three, so hopefully one ends up in the read buffer on phone completely...
 		Serial.write("ACK");
 		Serial.write("ACK");
-		getData(16);
-		aes.decrypt(inBytes, decrypted);
-		if (checkData(decrypted, (uint8_t *) "asdasd", 6)) {
-//	digitalWrite(UNLOCKED_PIN, LOW);
-//	digitalWrite(LOCKED_PIN, HIGH);
-			lock();
-		} else if (checkData(decrypted, (uint8_t *) "dsadsa", 6)) {
-//	digitalWrite(UNLOCKED_PIN, HIGH);
-//	digitalWrite(LOCKED_PIN, LOW);
-			unlock();
-		} else {
+
+		/* After sending ACK, send the MI challenge and then wait for it to be echoed back */
+		sendMIChallenge((uint8_t *) "ABCDEFGH");	// send challenge over MI
+		getData(8);
+
+		/* Did we receive the same string that we sent over MI? */
+		if (checkData(inBytes, (uint8_t *) "ABCDEFGH", 8)) {
+			
+			/* Yup, so wait for command (lock/unlock) now */
+			getData(16);
+			aes.decrypt(inBytes, decrypted);
+			if (checkData(decrypted, (uint8_t *) "asdasd", 6)) {
+				lock();
+			} else if (checkData(decrypted, (uint8_t *) "dsadsa", 6)) {
+				unlock();
+			} else {
+				Serial.write("NAK");
+				Serial.write("NAK");
+				Serial.write("NAK");
+				Serial.write("BAD COMMAND BAD COMMAND");
+				Serial.write((uint8_t *) decrypted, 16);
+				Serial.write((uint8_t *) inBytes, 6);
+			}
+
+		} else {	/* Nope, send a NAK */
 			Serial.write("NAK");
-			Serial.write("BAD COMMAND BAD COMMAND");
-			Serial.write((uint8_t *) decrypted, 16);
-			Serial.write((uint8_t *) inBytes, 6);
+			Serial.write("NAK");
+			Serial.write("NAK");
+			Serial.write("BAD RESPONSE BAD RESPONSE");
+			Serial.write((uint8_t *) inBytes, 16);
 		}
-	} else {
+	} else {	/* Otherwise, send a NAK and wait for passcode again */
+		Serial.write("NAK");
+		Serial.write("NAK");
 		Serial.write("NAK");
 		Serial.write("BAD KEY BAD KEY BAD KEY");
 		Serial.write((uint8_t *) inBytes, 16);
@@ -131,11 +161,14 @@ void unlock(void)
 {
 	int numHundreds = 0;	// keep track of how many current readings in a row are > 100
 
+	digitalWrite(UNLOCKED_PIN, HIGH);	// set LEDs accordingly
+	digitalWrite(LOCKED_PIN, LOW);
+/*
 	digitalWrite(A1, LOW);	// spin motor one way...
     digitalWrite(A2, HIGH);
     delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
 	while (1) {
-		if (analogRead(MOTOR_INPUT) > 100)
+		if (analogRead(MOTOR_READING) > 100)
 			numHundreds++;
 		else
 			numHundreds = 0;
@@ -143,21 +176,18 @@ void unlock(void)
 			break;
 	}
 	digitalWrite(A1, LOW);	// turn motor off
-    digitalWrite(A2, LOW);
-
-	digitalWrite(UNLOCKED_PIN, HIGH);	// set LEDs accordingly
-	digitalWrite(LOCKED_PIN, LOW);
+    digitalWrite(A2, LOW);*/
 }
 
 void lock(void)
 {
 	int numHundreds = 0;	// keep track of how many current readings in a row are > 100
-
+/*
 	digitalWrite(A1, HIGH);	// spin motor one way...
     digitalWrite(A2, LOW);
     delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
 	while (1) {
-		if (analogRead(MOTOR_INPUT) > 100)
+		if (analogRead(MOTOR_READING) > 100)
 			numHundreds++;
 		else
 			numHundreds = 0;
@@ -165,7 +195,7 @@ void lock(void)
 			break;
 	}
 	digitalWrite(A1, LOW);	// turn motor off
-    digitalWrite(A2, LOW);
+    digitalWrite(A2, LOW);*/
 
 	digitalWrite(UNLOCKED_PIN, LOW);	// set LEDs accordingly
 	digitalWrite(LOCKED_PIN, HIGH);
@@ -189,4 +219,39 @@ int checkData(uint8_t *received, uint8_t *target, int len)
 	}
 
 	return 1;
+}
+
+void sendMIChallenge(uint8_t *challenge)
+{
+	preamble();
+	//for (uint8_t i=1; i<9; i++)
+	//	transmitByte(i);
+	//for (uint8_t i=0xdd; i<0xdd+8; i++)
+	//	transmitByte(i);
+	transmitData(challenge);
+}
+
+void transmitData(uint8_t *data)
+{
+    while (*data)
+        transmitByte(*data++);
+}
+
+void transmitByte(uint8_t data)
+{
+    for(int i=0; i<8; i++) {
+		digitalWrite(13, data & 0x01);
+		delayMicroseconds(PERIOD);
+        data >>= 1;
+    }
+}
+
+void preamble(void)
+{
+    for(int i=0; i<8; i++) {
+        digitalWrite(13, HIGH);
+        delayMicroseconds(PERIOD);
+        digitalWrite(13, LOW);
+        delayMicroseconds(PERIOD);
+    }
 }

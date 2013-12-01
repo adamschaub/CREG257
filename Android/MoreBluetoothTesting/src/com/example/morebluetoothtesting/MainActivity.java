@@ -2,26 +2,20 @@ package com.example.morebluetoothtesting;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.List;
-import java.util.UUID;
 
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 import android.net.Uri;
 import android.os.Bundle;
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -30,9 +24,12 @@ import android.widget.Button;
 //XXX: Use services for persistant connections
 
 public class MainActivity extends Activity {
+
+	byte encryptedData [] = new byte[16];
 	
 	private byte encryptedPacket[] = {};
 	
+	Magnetometer magListener = null;
 	List<KeyPassData> keyPassList = null;
 	KeyPassData currentKpd = null;
 	FileManager fm = null;
@@ -66,12 +63,24 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		SensorManager sensorManager;
+		Sensor mag;
+		
 		/* Load list of known keys/passes/ids */
 		fm = new FileManager(getBaseContext());
 		keyPassList = fm.readData();
 		if (keyPassList.size() > 0) {
 			currentKpd = keyPassList.get(0);
-		
+			magListener = new Magnetometer();
+			
+			sensorManager = (SensorManager)getBaseContext().getSystemService(Context.SENSOR_SERVICE);
+	        if ((mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)) != null) {
+	        	Log.v("Success!", "There is a magnetomter!");
+	        	sensorManager.registerListener(magListener, mag, SensorManager.SENSOR_DELAY_FASTEST);
+	        } else {
+	        	Log.v("Failure!", "There is no magnetomter!");
+	        }
+			
 			Log.v("Passcode:", currentKpd.passcode);
 			Log.v("lock name:", currentKpd.lockName);
 		}
@@ -109,6 +118,28 @@ public class MainActivity extends Activity {
 				
 				btConnection.write(encryptedPacket);
 				
+				/* Wait for response... */
+				synchronized (btConnection) {
+					try {
+						btConnection.wait(1000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				
+				/* Now wait for the MI challenge */	
+				synchronized (magListener) {
+					try {
+						magListener.wait(1000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				byte micData[] = magListener.getData();
+				try {
+					Log.v("Got from MI:", new String(micData, 0, 8, "ASCII"));
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+			
+				/* Send what we just received over MI */
+				btConnection.write(micData);
+			
+				
 				/* Send the encrypted lock command */
 				try {
 					encryptedPacket = encryptData(currentKpd.key, "asdasd".getBytes("ASCII"), encryptedPacket);
@@ -133,6 +164,20 @@ public class MainActivity extends Activity {
 				} catch (Exception e) { Log.e("Error!", e.toString()); }
 				
 				btConnection.write(encryptedPacket);
+	
+				/* Now wait for the MI challenge */	
+				synchronized (magListener) {
+					try {
+						magListener.wait(1000);
+					} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				}
+				byte micData[] = magListener.getData();
+				try {
+					Log.v("Got from MI:", new String(micData, 0, 8, "ASCII"));
+				} catch (Exception e) { Log.e("Error!", e.toString()); }
+			
+				/* Send what we just received over MI */
+				btConnection.write(micData);
 				
 				/* Send the encrypted unlock command */
 				try {
@@ -194,7 +239,7 @@ public class MainActivity extends Activity {
         });
         
 	}
-	
+
 	public void onResume() {
 		super.onResume();
 		
@@ -215,5 +260,4 @@ public class MainActivity extends Activity {
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
-
 }

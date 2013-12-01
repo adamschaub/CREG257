@@ -54,7 +54,7 @@ public class FileManager {
     		outputStream.close();
 		} catch (Exception e) { Log.e("Error!", e.toString()); }
 	}
-	
+
 	/* Reads each stored key/pass/id file and creates a new
 	 * KeyPassData object, returns an ArrayList of the objects. 
 	 */
@@ -73,6 +73,7 @@ public class FileManager {
 			try {
 				fileIn = new FileInputStream(f);
 				fileIn.read(buffer);
+				fileIn.close();
 			} catch (Exception e) { Log.e("Error!", e.toString()); }
 		
 			passcodeLen = buffer[32];
