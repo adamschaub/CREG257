@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
 					btConnection = new BluetoothConnection(currentKpd.lockName);
 					btConnection.connect();
 				} 
-
+				
 				/* Send the encrypted passcode */
 				try {
 					encryptedPacket = encryptData(currentKpd.key, currentKpd.passcode.getBytes("ASCII"), encryptedPacket);
@@ -128,8 +128,10 @@ public class MainActivity extends Activity {
 				
 				/* Wait for response... */
 				synchronized (btConnection.mConnectedThread) {
+				//synchronized (btConnection) {
 					try {
 						btConnection.mConnectedThread.wait(1000);
+						//btConnection.wait(1000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				response = btConnection.getResponse();
@@ -140,7 +142,7 @@ public class MainActivity extends Activity {
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
-						magListener.wait(100000);
+						magListener.wait(10000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				byte micData[] = magListener.getData();
@@ -150,11 +152,11 @@ public class MainActivity extends Activity {
 				
 				/* Send what we just received over MI */
 				btConnection.write(micData);
-			
+				
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
-						magListener.wait(100000);
+						magListener.wait(10000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				micData = magListener.getData();
@@ -168,7 +170,7 @@ public class MainActivity extends Activity {
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
-						magListener.wait(100000);
+						magListener.wait(10000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				micData = magListener.getData();
@@ -181,8 +183,10 @@ public class MainActivity extends Activity {
 				
 				/* Wait for response... */
 				synchronized (btConnection.mConnectedThread) {
+				//synchronized (btConnection) {
 					try {
 						btConnection.mConnectedThread.wait(100000);
+						//btConnection.wait(100000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				response = btConnection.getResponse();
@@ -219,8 +223,10 @@ public class MainActivity extends Activity {
 				
 				/* Wait for response... */
 				synchronized (btConnection.mConnectedThread) {
+				//synchronized (btConnection) {
 					try {
 						btConnection.mConnectedThread.wait(100000);
+						//btConnection.wait(100000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				response = btConnection.getResponse();
@@ -231,7 +237,7 @@ public class MainActivity extends Activity {
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
-						magListener.wait(100000);
+						magListener.wait(10000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				byte micData[] = magListener.getData();
@@ -245,7 +251,7 @@ public class MainActivity extends Activity {
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
-						magListener.wait(100000);
+						magListener.wait(10000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				micData = magListener.getData();
@@ -259,7 +265,7 @@ public class MainActivity extends Activity {
 				/* Now wait for the MI challenge */	
 				synchronized (magListener) {
 					try {
-						magListener.wait(100000);
+						magListener.wait(10000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				micData = magListener.getData();
@@ -272,8 +278,10 @@ public class MainActivity extends Activity {
 			
 				/* Wait for response... */
 				synchronized (btConnection.mConnectedThread) {
+				//synchronized (btConnection) {
 					try {
 						btConnection.mConnectedThread.wait(100000);
+						//btConnection.wait(100000);
 					} catch (Exception e) { Log.e("Exception!", e.toString()); }
 				}
 				response = btConnection.getResponse();

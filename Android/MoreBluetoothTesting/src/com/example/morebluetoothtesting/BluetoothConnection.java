@@ -280,6 +280,9 @@ public class BluetoothConnection {
 		                    	synchronized (this) {
 		                    		this.notify();
 		                    	}
+	                    		//synchronized(btConnection) {
+	                    		//	btConnection.notify();
+	                    		//}
 	                    	}
 	                    }
                 	}
