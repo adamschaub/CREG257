@@ -438,14 +438,12 @@ public class BluetoothConnection {
 	// Create a BroadcastReceiver for bluetooth related checks
 	/*	public final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 		    public void onReceive(Context context, Intent intent) {
-		    	Log.v("Holy shit!", "Found something!");
 		        String action = intent.getAction();
 
 		        //We don't want to reconnect to already connected device
 		        if(isConnected==false){
 		            // When discovery finds a device
 		            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-		            	Log.v("Holy shit!", "Gonna try connecting!");
 		                // Get the BluetoothDevice object from the Intent
 		                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
@@ -465,10 +463,8 @@ public class BluetoothConnection {
 		            if(device.getAddress().equals(partnerDevAdd)==true)
 		                isConnected=true;
 		            
-		            Log.v("Holy shit!", "Connected! isConnected=" + isConnected);
 		            byte t[] = {'a', 'b', 'c', 0};
 		    		//if  (!connectThread.write(t)) {
-		    		//	Log.v("Well shit", "that didnt work");
 		    		//}
 		            if (manageThread != null)
 		            	Log.v("manageThread = " , manageThread.toString());
@@ -482,7 +478,6 @@ public class BluetoothConnection {
 		            if(device.getAddress().equals(partnerDevAdd)==true)
 		                isConnected=false;
 		            
-		            Log.v("Holy shit!", "Disconnected! isConnected=" + isConnected);
 		        }
 		    }
 		};*/
