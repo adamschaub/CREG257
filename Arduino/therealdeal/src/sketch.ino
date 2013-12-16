@@ -50,6 +50,8 @@ void setup()
 	pinMode(MI_OUT_PIN, OUTPUT);
 	digitalWrite(MI_OUT_PIN, LOW);
 
+    analogReference(INTERNAL);
+
 	initLock();
 
 	aes.set_key(key, KEY_SIZE);
@@ -175,7 +177,7 @@ void unlock(void)
 
 	digitalWrite(UNLOCKED_PIN, HIGH);	// set LEDs accordingly
 	digitalWrite(LOCKED_PIN, LOW);
-/*
+
 	digitalWrite(A1, LOW);	// spin motor one way...
     digitalWrite(A2, HIGH);
     delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
@@ -188,13 +190,13 @@ void unlock(void)
 			break;
 	}
 	digitalWrite(A1, LOW);	// turn motor off
-    digitalWrite(A2, LOW);*/
+    digitalWrite(A2, LOW);
 }
 
 void lock(void)
 {
 	int numHundreds = 0;	// keep track of how many current readings in a row are > 100
-/*
+
 	digitalWrite(A1, HIGH);	// spin motor one way...
     digitalWrite(A2, LOW);
     delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
@@ -207,7 +209,7 @@ void lock(void)
 			break;
 	}
 	digitalWrite(A1, LOW);	// turn motor off
-    digitalWrite(A2, LOW);*/
+    digitalWrite(A2, LOW);
 
 	digitalWrite(UNLOCKED_PIN, LOW);	// set LEDs accordingly
 	digitalWrite(LOCKED_PIN, HIGH);
