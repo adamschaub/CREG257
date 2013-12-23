@@ -107,7 +107,7 @@ public class MainActivity extends Activity {
 				btConnection.write(currentKpd.key);
 			}
 		});
-        
+    
         Button lockButton = (Button) findViewById(R.id.lockButtonId);
         lockButton.setOnClickListener(new View.OnClickListener() {
 			@Override

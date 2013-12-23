@@ -44,8 +44,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 	private int prevVal = -1;
 	private int errors = 0;
 	private int noterrors = 0;
+	private int prevnoterrors = 0;
+	private int preverrors = 0;
 	private int currentByte;
-	private byte string[] = {'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'};
+	private byte string[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' };
 	
 	private int bitcount = 0;
 	
@@ -68,9 +70,9 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         if ((mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)) != null) {
         	System.out.println("Success! There is a magnetometer!");
-        	//sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_FASTEST);
+        	sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_FASTEST);
         	currentPeriod = 100;
-        	sensorManager.registerListener(this, mag, currentPeriod);
+        	//sensorManager.registerListener(this, mag, currentPeriod);
         } else {
         	System.out.println("Failure! There is no magnetometer!");
         }
@@ -89,6 +91,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 			}
 		});
     }
+    
+    int z = 0;
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
@@ -118,9 +122,9 @@ public class MainActivity extends Activity implements SensorEventListener {
 		/* Determine what the logical value is.
 		 * XXX: There's got to be a better way to do this.
 		 */
-		if (rms < (prevRMS-2))
+		if (rms < (prevRMS-2))	//XXX was prevRMS-2 (should be +???)
 			logicalVal = 0;
-		else if ((rms-2) > prevRMS)
+		else if ((rms-2) > prevRMS)	//XXX was rms-2
 			logicalVal = 1;
 		else
 			logicalVal = prevLogicalVal;	// no significant change, stay at current logical level
@@ -133,6 +137,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 		 * will constitute four bytes (lowest bit first).  Then, go back to
 		 * state=0 and wait for another preamble.  */
 		
+		//z++;
+		if (z>34*25) {
+			binaryVal.setText("");
+			z = 0;
+		}
 		//binaryVal.setText(binaryVal.getText() + "" + logicalVal);
 		if (state == 16) {
 				inByte >>= 1;
@@ -146,11 +155,12 @@ public class MainActivity extends Activity implements SensorEventListener {
 					noterrors++;
 				
 				if ((bitsRecieved % 8) == 0) {
-					//binaryVal.setText(binaryVal.getText() + "" + String.format("%02x", inByte));
+					//binaryVal.setText(binaryVal.getText() + "" + String.format("%c", (char) inByte));
+					//binaryVal.setText(binaryVal.getText() + "" + (char) inByte);
 					encryptedData[(bitsRecieved/8)-1] = (byte) inByte;
 					//binaryVal.setText(binaryVal.getText() + "" + (char) inByte);
 					inByte = 0;
-					if (bitsRecieved == (8*16)) {
+					if (bitsRecieved == (8*8)) {
 						bitsRecieved = 0;
 						state = 0;
 						/*try {
@@ -159,10 +169,18 @@ public class MainActivity extends Activity implements SensorEventListener {
 						if (binaryVal.getText().length() > 34*25)
 							binaryVal.setText("");
 						binaryVal.setText(binaryVal.getText() + " ");
-						for (int i=0; i<16; i++) {
+						try {
+					//		binaryVal.setText(binaryVal.getText() + new String(encryptedData, 0, 16, "ASCII"));
+						} catch (Exception e) { Log.e("Error!", e.toString()); }
+						
+						for (int i=0; i<8; i++) {
 							//binaryVal.setText(binaryVal.getText() + "" + (char) decryptedData[i]);
-							binaryVal.setText(binaryVal.getText() + "" + (char) encryptedData[i]);
+							binaryVal.setText(binaryVal.getText() + "" + String.format("%c", (encryptedData[i] & 0xff)));
 						}
+						try {
+							Log.v("Errors:", errors+":"+noterrors);
+							//Log.v("Here!", new String(encryptedData, 0, 16, "ASCII"));
+						} catch (Exception e) { Log.e("Error!", e.toString()); }
 					}
 				}
 			//}
@@ -170,6 +188,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 			if (((state % 2) == 0 && logicalVal == 1) || ((state % 2) == 1 && logicalVal == 0)) {
 				state++;
 				if (state == 16) {
+					preverrors = errors;
+					prevnoterrors = noterrors;
 					errors = 0;
 					noterrors = 0;
 				}
@@ -183,7 +203,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 		avgJitText.setText("Avg Jitter(Hz):  " + avgJit);
 		avgFreqText.setText("Avg Freq (Hz):  " + avgFreq);
 		//periodText.setText("Period (us):      " + currentPeriod);
-		periodText.setText("Errors      " + errors + " Good bits: " + noterrors);
+		//periodText.setText("Errors      " + errors + " Good bits: " + noterrors);
+		periodText.setText(errors + " " + noterrors + " PrevE: " + preverrors + " PrevNE: " + prevnoterrors);
 	}
 	
 	private static byte[] decrypt(byte[] raw, byte[] encrypted) throws Exception {
