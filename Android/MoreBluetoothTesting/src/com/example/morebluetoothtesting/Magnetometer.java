@@ -85,12 +85,12 @@ public class Magnetometer extends HandlerThread implements SensorEventListener {
 			bitsRecieved++;
 			
 			if ((bitsRecieved % 8) == 0) {
-				//Log.v("Stuff:", String.format("%c", (char) inByte));
+				//Log.v(CLASS_NAME, (char) inByte));
 				encryptedData[(bitsRecieved/8)-1] = (byte) inByte;
 				inByte = 0;
 				if (bitsRecieved == (8*8)) {
 					try {
-						//Log.v("Received:", new String(encryptedData, 0, 8, "ASCII"));
+						//Log.v(CLASS_NAME, new String(encryptedData, 0, 8, "ASCII"));
 					} catch (Exception e) { Log.e ("Error!", e.toString()); }
 					bitsRecieved = 0;
 					state = 0;

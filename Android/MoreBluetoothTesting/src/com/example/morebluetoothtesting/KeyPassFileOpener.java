@@ -8,6 +8,8 @@ import android.util.Log;
 
 public class KeyPassFileOpener extends Activity {
 	
+	private String CLASS_NAME = this.getClass().getSimpleName();
+	
 	protected void onCreate(Bundle savedInstance) {
 		super.onCreate(savedInstance);
 		
@@ -21,7 +23,7 @@ public class KeyPassFileOpener extends Activity {
 			fileData = getContentResolver().openInputStream(intent.getData());
 			bytesRead = fileData.read(buffer);
 			fm.storeData(buffer);
-			Log.v("File contents:", new String(buffer, 0, bytesRead, "ASCII"));
+			Log.v(CLASS_NAME, new String(buffer, 0, bytesRead, "ASCII"));
 		} catch (Exception e) { Log.e("Error!", e.toString()); }
 	}
 }

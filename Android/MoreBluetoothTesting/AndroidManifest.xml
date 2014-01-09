@@ -45,6 +45,7 @@
 				<data android:scheme="content" android:pathPattern=".*\\.phnky" android:mimeType="application/octet-stream"/>
 		    </intent-filter>
         </activity>
+        <service android:name=".MainService"></service>
     </application>
 
 </manifest>

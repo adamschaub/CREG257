@@ -11,6 +11,8 @@ import android.util.Log;
 
 public class FileManager {
 	
+	private String CLASS_NAME = this.getClass().getSimpleName();
+	
 	private Context context;
 	
 	public FileManager(Context c) {
@@ -86,11 +88,11 @@ public class FileManager {
 			kpd = new KeyPassData(buffer, passcode, lockId);
 			keyPassList.add(kpd);
 		
-			Log.v("Found lock file: ", f.toString());
+			Log.v(CLASS_NAME, f.toString());
 		}
 		
 		if (lockDir.listFiles().length == 0)
-			Log.v("FileManager:", "No files!");
+			Log.v(CLASS_NAME, "No files!");
 	
 		return keyPassList;
 	}

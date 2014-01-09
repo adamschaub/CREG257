@@ -12,7 +12,7 @@ uint8_t buf_pos = 0;
 
 void setup()
 {
-	Serial.begin(115200);
+	dbSerial.begin(115200);
 	btSerial.begin(9600);	// SoftwareSerial was having trouble at 115200
 }
 
@@ -31,7 +31,6 @@ void loop()
 		else
 			buf_pos++;
 	}
-
 	/* If input available from BT, print it out */
 	while(btSerial.available()) {
 		dbSerial.print((char)btSerial.read());

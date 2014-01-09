@@ -29,6 +29,8 @@ import android.os.Build;
 
 public class BluetoothDiscover extends Activity {
 
+	private String CLASS_NAME = this.getClass().getSimpleName();
+	
 	private BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 	private BluetoothDevice targetDevice = null;
 	
@@ -45,9 +47,9 @@ public class BluetoothDiscover extends Activity {
 	            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 	            // Add the name and address to an array adapter to show in a ListView
 	            pairedDevicesArray.add(device.getName() + "\n" + device.getAddress());
-	            Log.v("Discovered device: ", device.getName());
+	            Log.v(CLASS_NAME, device.getName());
 	            if (device.getName().equals("RNBT-A70E")) {
-	            	Log.v("Success!", "Found our device!");
+	            	Log.v(CLASS_NAME, "Found our device!");
 	            	targetDevice = device;
 	            	mBluetoothAdapter.cancelDiscovery();
 	            }
@@ -104,7 +106,7 @@ public class BluetoothDiscover extends Activity {
 		    for (BluetoothDevice device : pairedDevices) {
 		        // Add the name and address to an array adapter to show in a ListView
 		        pairedDevicesArray.add(device.getName() + "\n" + device.getAddress());
-		        Log.v("Paired device: ", device.getName());
+		        Log.v(CLASS_NAME, device.getName());
 		    }
 		} else
 			pairedDevicesArray.add("No devices paired!");
