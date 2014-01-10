@@ -227,15 +227,13 @@ public class BluetoothConnection {
                             try {
                                 socket.close();
                             } catch (IOException e) {
-                                Log.e("Stuff", "Could not close unwanted socket", e);
+                                Log.e(CLASS_NAME, "Could not close unwanted socket", e);
                             }
                             break;
                         }
                     }
                 }
             }
-            Log.i("Stuff", "END mAcceptThread, socket Type: " + mSocketType);
-
         }
 
         public void cancel() {
@@ -286,8 +284,7 @@ public class BluetoothConnection {
                 		bytes = mmInStream.read(buffer);
 	                    if (bytes > 0) {
 	                    	inStr = new String(buffer, 0, bytes, "ASCII");
-	                    	Log.v(CLASS_NAME, new String(buffer, 0, bytes, "ASCII"));
-	                    	write(buffer);
+	                    	Log.v("BT rcvd:", new String(buffer, 0, bytes, "ASCII"));
 	                    	if (inStr.contains("ACK") || inStr.contains("NAK")) {
 	                    		if (inStr.contains("ACK"))
 	                    			setResponse(RESPONSE_ACK);
