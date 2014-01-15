@@ -42,30 +42,6 @@ public class MainActivity extends Activity {
 	KeyPassData currentKpd = null;
 	FileManager fm = null;
 	
-	private BluetoothConnection btConnection = null;
-	 
-	private byte[] encryptData(byte[] key, byte[] data, byte[] encryptedData) {
-			byte[] encrypted = {};
-			byte[] paddedData = new byte [data.length + 16 - data.length%16];	// pad to 16 byte block size
-			Cipher cipher = null;
-	        SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
-	        System.arraycopy(data, 0, paddedData, 0, data.length);
-	     
-	        try {
-	        	cipher = Cipher.getInstance("AES/ECB/NoPadding");
-	        } catch (Exception e) { Log.e("Error!", e.toString()); }
-	        try {
-	        	cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
-			} catch (Exception e) { Log.e("Error!", e.toString()); }
-	        try {
-	        	encrypted = cipher.doFinal(paddedData);
-			} catch (Exception e) { Log.e("Error!", e.toString()); }
-	        
-	        encryptedData = encrypted;
-	       
-	        return encrypted;
-	}
-	
 	private Intent mainIntent;
 	private MainService mainService;
 	
@@ -85,21 +61,17 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-	
-		SensorManager sensorManager;
-		Sensor mag;
 		
 		mainIntent = new Intent(this, MainService.class);
 		bindService(mainIntent, con, Context.BIND_AUTO_CREATE);
 		startService(mainIntent);
 		
 		/* Load list of known keys/passes/ids */
-//		fm = new FileManager(getBaseContext());
-//		keyPassList = fm.readData();
-//		if (keyPassList.size() > 0) {
-//			currentKpd = keyPassList.get(0);
-//			magListener = new Magnetometer();
-//			
+		//fm = new FileManager(getBaseContext());
+		//keyPassList = fm.readData();
+		//if (keyPassList.size() > 0) {
+		//	currentKpd = keyPassList.get(0);
+
 //			sensorManager = (SensorManager)getBaseContext().getSystemService(Context.SENSOR_SERVICE);
 //	        if ((mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)) != null) {
 //	        	Log.v(CLASS_NAME, "There is a magnetomter!");
@@ -132,197 +104,9 @@ public class MainActivity extends Activity {
 //				btConnection.write(currentKpd.key);*/
 //			}
 //		});
-//    
-//        Button lockButton = (Button) findViewById(R.id.lockButtonId);
-//        lockButton.setOnClickListener(new View.OnClickListener() {
-//			@Override
-//			public void onClick(View v) {
-//				int response;
-//				
-//				if (btConnection == null) {
-//					btConnection = new BluetoothConnection(currentKpd.lockName);
-//					btConnection.connect();
-//				} 
-//				
-//				/* Send the encrypted passcode */
-//				try {
-//					encryptedPacket = encryptData(currentKpd.key, currentKpd.passcode.getBytes("ASCII"), encryptedPacket);
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				btConnection.write(encryptedPacket);
-//				
-//				/* Wait for response... */
-//				synchronized (btConnection.mConnectedThread) {
-//				//synchronized (btConnection) {
-//					try {
-//						btConnection.mConnectedThread.wait(1000);
-//						//btConnection.wait(1000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				response = btConnection.getResponse();
-//				Log.v(CLASS_NAME, response + "");
-//				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
-//					return;
-//			
-//				/* Now wait for the MI challenge */	
-//				synchronized (magListener) {
-//					try {
-//						magListener.wait(10000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				byte micData[] = magListener.getData();
-//				try {
-//					Log.v(CLASS_NAME, new String(micData, 0, 8, "ASCII"));
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				/* Send what we just received over MI */
-//				btConnection.write(micData);
-//				
-//				/* Now wait for the MI challenge */	
-//				synchronized (magListener) {
-//					try {
-//						magListener.wait(10000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				micData = magListener.getData();
-//				try {
-//					Log.v(CLASS_NAME, new String(micData, 0, 8, "ASCII"));
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				/* Send what we just received over MI */
-//				btConnection.write(micData);
-//				
-//				/* Now wait for the MI challenge */	
-//				synchronized (magListener) {
-//					try {
-//						magListener.wait(10000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				micData = magListener.getData();
-//				try {
-//					Log.v(CLASS_NAME, new String(micData, 0, 8, "ASCII"));
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				/* Send what we just received over MI */
-//				btConnection.write(micData);
-//				
-//				/* Wait for response... */
-//				synchronized (btConnection.mConnectedThread) {
-//				//synchronized (btConnection) {
-//					try {
-//						btConnection.mConnectedThread.wait(100000);
-//						//btConnection.wait(100000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				response = btConnection.getResponse();
-//				Log.v(CLASS_NAME, response + "");
-//				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
-//					return;
-//				
-//				/* Send the encrypted lock command */
-//				try {
-//					encryptedPacket = encryptData(currentKpd.key, "asdasd".getBytes("ASCII"), encryptedPacket);
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				btConnection.write(encryptedPacket);
-//			}
-//		});
-//    
-//        Button unlockButton = (Button) findViewById(R.id.unlockButtonId);
-//        unlockButton.setOnClickListener(new View.OnClickListener() {
-//			@Override
-//			public void onClick(View v) {
-//				int response;
-//				
-//				if (btConnection == null) {
-//					btConnection = new BluetoothConnection(currentKpd.lockName);
-//					btConnection.connect();
-//				}
-//				
-//				/* Send the encrypted passcode */
-//				try {
-//					encryptedPacket = encryptData(currentKpd.key, currentKpd.passcode.getBytes("ASCII"), encryptedPacket);
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				btConnection.write(encryptedPacket);
-//				
-//				/* Wait for response... */
-//				synchronized (btConnection.mConnectedThread) {
-//				//synchronized (btConnection) {
-//					try {
-//						btConnection.mConnectedThread.wait(100000);
-//						//btConnection.wait(100000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				response = btConnection.getResponse();
-//				Log.v(CLASS_NAME, response + "");
-//				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
-//					return;
-//			
-//				/* Now wait for the MI challenge */	
-//				synchronized (magListener) {
-//					try {
-//						magListener.wait(10000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				byte micData[] = magListener.getData();
-//				try {
-//					Log.v(CLASS_NAME, new String(micData, 0, 8, "ASCII"));
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//		
-//				/* Send what we just received over MI */
-//				btConnection.write(micData);
-//				
-//				/* Now wait for the MI challenge */	
-//				synchronized (magListener) {
-//					try {
-//						magListener.wait(10000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				micData = magListener.getData();
-//				try {
-//					Log.v(CLASS_NAME, new String(micData, 0, 8, "ASCII"));
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				/* Send what we just received over MI */
-//				btConnection.write(micData);
-//				
-//				/* Now wait for the MI challenge */	
-//				synchronized (magListener) {
-//					try {
-//						magListener.wait(10000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				micData = magListener.getData();
-//				try {
-//					Log.v(CLASS_NAME, new String(micData, 0, 8, "ASCII"));
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				/* Send what we just received over MI */
-//				btConnection.write(micData);
-//			
-//				/* Wait for response... */
-//				synchronized (btConnection.mConnectedThread) {
-//				//synchronized (btConnection) {
-//					try {
-//						btConnection.mConnectedThread.wait(100000);
-//						//btConnection.wait(100000);
-//					} catch (Exception e) { Log.e("Exception!", e.toString()); }
-//				}
-//				response = btConnection.getResponse();
-//				Log.v(CLASS_NAME, response + "");
-//				if (response == BluetoothConnection.RESPONSE_NAK)	// XXX: Do something about the NAK rather than just returning...
-//					return;
-//		
-//				/* Send the encrypted unlock command */
-//				try {
-//					encryptedPacket = encryptData(currentKpd.key, "dsadsa".getBytes("ASCII"), encryptedPacket);
-//				} catch (Exception e) { Log.e("Error!", e.toString()); }
-//				
-//				btConnection.write(encryptedPacket);
-//			}
-//		});
-//        
+
+		/* TODO: On lock/unlock buttons, need to message service and have that try to execute the command. */
+
         Button shareButton = (Button) findViewById(R.id.shareKeyButtonId);
         shareButton.setOnClickListener(new View.OnClickListener () {
         	public void onClick(View v) {
