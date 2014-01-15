@@ -250,6 +250,7 @@ int readBTSerialEnc()
 	uint8_t decrypted[16];
 	uint8_t i;
 
+	bt_buf_pos = 0;
 	while(btSerial.available()) {
 		bt_buf[bt_buf_pos] = btSerial.read();
 		dbSerial.write(bt_buf[bt_buf_pos]);
