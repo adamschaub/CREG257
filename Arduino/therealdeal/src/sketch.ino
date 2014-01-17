@@ -20,6 +20,10 @@
 #define BT_TX		   3
 #define BT_CMDBUF_LEN   50
 
+#define UNCONNECTED	0
+#define CONNECTING	1
+#define CONNECTED	2
+
 SoftwareSerial btSerial(BT_RX, BT_TX);
 HardwareSerial dbSerial = Serial;
 
@@ -28,7 +32,7 @@ uint8_t db_buf_pos = 0;
 uint8_t bt_buf[50];
 uint8_t bt_buf_pos = 0;
 
-uint8_t connected = 0;
+uint8_t bt_state = UNCONNECTED;
 
 uint8_t *phone_mac_addr = (uint8_t *) "78521A53544B";
 
@@ -73,6 +77,7 @@ void setup()
 	aes.set_key(key, KEY_SIZE);
 
 	btSerial.write("$$$");
+	delay(2000);
 }
 
 void loop()
@@ -80,8 +85,8 @@ void loop()
 	uint8_t inByte;
 	uint8_t numValid;	// how many valid responses to the MI challenge did we get?
 
-	if (!connected) {
-		delay(2000);
+	if (bt_state == UNCONNECTED) {
+		bt_state = CONNECTING;
 		btSerial.write("C,");
 		btSerial.write((char *) phone_mac_addr);
 		btSerial.write("\r");
@@ -93,7 +98,7 @@ void loop()
 	if (readBTSerial()) {
 
 		if (checkData(bt_buf, (uint8_t *) "+CONNECT", 8)) {
-			connected = 1;
+			bt_state = CONNECTED;
 
 			/* Start spamming the MI challenge */
 			while(1) {
@@ -126,6 +131,11 @@ void loop()
 					}
 				}
 			}
+		} else if (checkData(bt_buf, (uint8_t *) "CONNECT failed", 14)) {
+			bt_state = UNCONNECTED;
+		} else if (checkData(bt_buf, (uint8_t *) "+REBOOT", 7)) {
+			btSerial.write("$$$");
+			bt_state = UNCONNECTED;
 		}
 	}
 
