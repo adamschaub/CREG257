@@ -51,6 +51,9 @@ public class MainService extends Service {
 	private void doAuthSeq() {
 		int response = BluetoothConnection.RESPONSE_NONE;
 
+		Log.v(CLASS_NAME, "Sending unlock command");
+		while (!(btConnection.write("dsadsa\r".getBytes())));
+
 		boolean miDataOK = false;
 		byte miData[] = new byte[8];
 
@@ -84,10 +87,6 @@ public class MainService extends Service {
 			}
 			response = btConnection.getResponse();
 		}
-
-		/* MI challenge passed, so we're good to send our command: */
-		Log.v(CLASS_NAME, "Sending unlock command");
-		btConnection.write("dsadsa\r".getBytes());
 	}
 
 	private byte[] encryptData(byte[] key, byte[] data, byte[] encryptedData) {
@@ -118,9 +117,9 @@ public class MainService extends Service {
 		super.onCreate();
 		Log.v(CLASS_NAME, "Created");
 
-		btConnection = new BluetoothConnection();
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED);
 		registerReceiver(btReceiver, filter);
+		btConnection = new BluetoothConnection();
 
 		magListener = new Magnetometer();
 		SensorManager sensorManager;

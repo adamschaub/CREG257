@@ -24,6 +24,10 @@
 #define CONNECTING	1
 #define CONNECTED	2
 
+#define CMD_LOCK	0
+#define CMD_UNLOCK	1
+#define CMD_NONE	2
+
 SoftwareSerial btSerial(BT_RX, BT_TX);
 HardwareSerial dbSerial = Serial;
 
@@ -43,6 +47,8 @@ uint8_t inBytes[32];
 uint8_t passcode[32] = {'1', '2', '3', '4', '5', '6', '7', '8'};	// initially set to init sequence
 uint8_t passcodeLen;
 
+void get_cmd(void);
+void do_mi_authentication(uint8_t);
 void initLock(void);
 void lock(void);
 void unlock(void);
@@ -85,6 +91,7 @@ void loop()
 	uint8_t inByte;
 	uint8_t numValid;	// how many valid responses to the MI challenge did we get?
 
+	/* Try connecting to phone if not currently connected or trying to connect */
 	if (bt_state == UNCONNECTED) {
 		bt_state = CONNECTING;
 		btSerial.write("C,");
@@ -93,54 +100,74 @@ void loop()
 		delay(100);
 	}
 
-	/* Wait for the connect message from the BT module.
+	/* Wait for the connection status message from the BT module.
 	 * This will be unencrypted, because it's coming directly from the module */
 	if (readBTSerial()) {
 
+		/* Connected to phone, so now listen for the command the phone wants us to execute */
 		if (checkData(bt_buf, (uint8_t *) "+CONNECT", 8)) {
 			bt_state = CONNECTED;
+			get_cmd();
+		}
 
-			/* Start spamming the MI challenge */
-			while(1) {
-				sendMIChallenge((uint8_t *) "ABCDEFGH");
-
-				/* Read BT to get response.  This WILL be encrypted,
-				 * because this message comes from the phone */
-				if (readBTSerialEnc()) {
-
-					if (checkData(bt_buf, (uint8_t *) "ABCDEFGH", 8)) {	// Good response to MI
-						btSerial.write("ACKACKACK");
-
-						/* Since the MI response was good, just wait for a command from phone */
-						while(1) {
-
-							/* Read the command (lock or unlock) that the phone sent.
-							 * This will also be encrypted. */
-							if (readBTSerial()) {
-								if (checkData(bt_buf, (uint8_t *) "dsadsa", 6)) {
-									unlock();
-									goto out;
-								} else if (checkData(bt_buf, (uint8_t *) "asdasd", 6)) {
-									lock();
-									goto out;
-								}
-							}
-						}
-					} else {	// Bad response to MI, respond with a NAK and keep spamming
-						btSerial.write("NAKNAKNAK");
-					}
-				}
-			}
-		} else if (checkData(bt_buf, (uint8_t *) "CONNECT failed", 14)) {
+		/* Connection failed, set state to unconnected and we'll try to connect again at the top of loop() */
+		else if (checkData(bt_buf, (uint8_t *) "CONNECT failed", 14)) {
 			bt_state = UNCONNECTED;
-		} else if (checkData(bt_buf, (uint8_t *) "+REBOOT", 7)) {
+		}
+
+		/* For some reason the module will occasionally reboot, if that happens enter CMD mode again */
+		else if (checkData(bt_buf, (uint8_t *) "+REBOOT", 7)) {
 			btSerial.write("$$$");
 			bt_state = UNCONNECTED;
 		}
 	}
+}
 
-out:;
+/* Connected to phone, so now listen for the command to be sent from the phone */
+void get_cmd(void)
+{
+	while(1) {
 
+		/* Read the command (lock or unlock) that the phone sent.
+		 * This will also be encrypted. */
+		if (readBTSerial()) {
+			if (checkData(bt_buf, (uint8_t *) "dsadsa", 6)) {
+				do_mi_authentication(CMD_UNLOCK);
+				return;
+			} else if (checkData(bt_buf, (uint8_t *) "asdasd", 6)) {
+				do_mi_authentication(CMD_LOCK);
+				return;
+			}
+		}
+	}
+}
+
+/* We've received the command, so now just do the MI authenticate.
+ * If that succeeds, execute the command sent previously. */
+void do_mi_authentication(uint8_t on_auth_cmd)
+{
+	while(1) {
+		sendMIChallenge((uint8_t *) "ABCDEFGH");
+
+		/* Read BT to get response.  This WILL be encrypted,
+		 * because this message comes from the phone */
+		if (readBTSerialEnc()) {
+
+			if (checkData(bt_buf, (uint8_t *) "ABCDEFGH", 8)) {	// Good response to MI
+				btSerial.write("ACKACKACK");
+
+				if (on_auth_cmd == CMD_UNLOCK)
+					unlock();
+				else if (on_auth_cmd == CMD_LOCK)
+					lock();
+
+				/* Done communication sequence, just return */
+				return;
+			} else {	// Bad response to MI, respond with a NAK and keep spamming
+				btSerial.write("NAKNAKNAK");
+			}
+		}
+	}
 }
 
 void initLock(void)
