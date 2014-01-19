@@ -4,38 +4,22 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.app.Activity;
-import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 
-//XXX: Use services for persistant connections
-
 public class MainActivity extends Activity {
 
 	private String CLASS_NAME = this.getClass().getSimpleName();
-	
-	byte encryptedData [] = new byte[16];
-	
-	private byte encryptedPacket[] = {};
 	
 	Magnetometer magListener = null;
 	List<KeyPassData> keyPassList = null;

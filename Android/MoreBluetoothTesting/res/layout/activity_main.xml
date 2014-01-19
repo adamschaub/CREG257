@@ -16,37 +16,18 @@
         android:text="Initialize" />
 
     <Button
-        android:id="@+id/lockButtonId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_centerVertical="true"
-        android:text="Lock" />
-
-    <Button
-        android:id="@+id/unlockButtonId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/lockButtonId"
-        android:layout_alignBottom="@+id/lockButtonId"
-        android:layout_alignRight="@+id/initButtonId"
-        android:text="Unlock" />
-
-    <Button
         android:id="@+id/shareKeyButtonId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@+id/initButtonId"
         android:layout_alignBottom="@+id/initButtonId"
-        android:layout_alignLeft="@+id/lockButtonId"
         android:text="Share Key" />
 
     <Button
         android:id="@+id/delButtonId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/lockButtonId"
-        android:layout_below="@+id/lockButtonId"
+        android:layout_centerVertical="true"
         android:layout_marginTop="68dp"
         android:text="Delete Lock Files" />
 

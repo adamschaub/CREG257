@@ -1,12 +1,8 @@
 package com.example.morebluetoothtesting;
 
-import java.io.UnsupportedEncodingException;
-
-import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
