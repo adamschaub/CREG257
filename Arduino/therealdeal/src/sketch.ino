@@ -38,7 +38,9 @@ uint8_t bt_buf_pos = 0;
 
 uint8_t bt_state = UNCONNECTED;
 
-uint8_t *phone_mac_addr = (uint8_t *) "78521A53544B";
+uint8_t num_known_phones;
+uint8_t current_phone;
+uint8_t *known_phones[10];
 
 AES aes;
 
@@ -88,15 +90,15 @@ void setup()
 
 void loop()
 {
-	uint8_t inByte;
-	uint8_t numValid;	// how many valid responses to the MI challenge did we get?
-
 	/* Try connecting to phone if not currently connected or trying to connect */
 	if (bt_state == UNCONNECTED) {
 		bt_state = CONNECTING;
 		btSerial.write("C,");
-		btSerial.write((char *) phone_mac_addr);
+		btSerial.write((char *) known_phones[current_phone]);
 		btSerial.write("\r");
+		current_phone++;
+		if (current_phone >= num_known_phones)
+			current_phone = 0;
 		delay(100);
 	}
 
@@ -213,6 +215,10 @@ void initLock(void)
 		for (int i=0; i<32; i++)
 			key[i] = EEPROM.read(1+passcodeLen+i);
 	}
+
+	num_known_phones = 1;
+	current_phone = 0;
+	known_phones[0] = (uint8_t *) "78521A53544B";
 
 	digitalWrite(UNLOCKED_PIN, LOW);
 }
