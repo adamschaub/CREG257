@@ -1,6 +1,8 @@
 
 package com.example.morebluetoothtesting;
 
+import java.util.HashMap;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -22,14 +24,25 @@ public class MainService extends Service {
 
 	private String CLASS_NAME = this.getClass().getSimpleName();
 
+	private int KEY_SIZE = 32;
+
 	private BluetoothConnection btConnection = null;
 	private Magnetometer magListener = null;
 	
+	HashMap<String, String> keyAddrMap = null;
+	FileManager fm = null;
+	byte key[] = new byte[KEY_SIZE];
+
 	/* Receives Bluetooth related messages (e.g. when BT is connected) */
 	public final BroadcastReceiver btReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
 			if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())) {
-				Log.v(CLASS_NAME, "Connected to BT");
+				String connectedAddr = ((BluetoothDevice)intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)).getAddress();
+				if (keyAddrMap.get(connectedAddr) == null)
+					Log.v("asd", "I don't know you...");	// disconnect
+				else
+					key = keyAddrMap.get(connectedAddr).getBytes();
+				Log.v(CLASS_NAME, "Connected to BT " + keyAddrMap.get(connectedAddr) + " " + connectedAddr);
 				doAuthSeq();
 			}
 		}
@@ -78,7 +91,7 @@ public class MainService extends Service {
 
 			/* Reply to the door with the challenge we received, and wait for an ACK or NAK. */
 			try {
-				btConnection.write(encryptData("12345678123456781234567812345678".getBytes("ASCII"), miData, new byte[16]));
+				btConnection.write(encryptData(miData, new byte[16]));
 			} catch (Exception e) { Log.e("Exception!", e.toString()); }
 			synchronized (btConnection.mConnectedThread) {
 				try {
@@ -89,7 +102,7 @@ public class MainService extends Service {
 		}
 	}
 
-	private byte[] encryptData(byte[] key, byte[] data, byte[] encryptedData) {
+	private byte[] encryptData(byte[] data, byte[] encryptedData) {
 		byte[] encrypted = {};
 		byte[] paddedData = new byte [data.length + 16 - data.length%16];	// pad to 16 byte block size
 
@@ -119,7 +132,7 @@ public class MainService extends Service {
 
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED);
 		registerReceiver(btReceiver, filter);
-		btConnection = new BluetoothConnection();
+		btConnection = BluetoothConnection.getInstance();
 
 		magListener = new Magnetometer();
 		SensorManager sensorManager;
@@ -135,6 +148,10 @@ public class MainService extends Service {
 		} else {
 			Log.v(CLASS_NAME, "There is no magnetomter!");
 		}
+
+		/* Load list of known keys/passes/ids */
+		fm = new FileManager(getBaseContext());
+		keyAddrMap = fm.getKeyAddrMap();
 	}
 
 	public int onStartCommand(Intent intent, int flags, int startId) {

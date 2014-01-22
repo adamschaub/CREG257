@@ -3,36 +3,22 @@ package com.example.morebluetoothtesting;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 import android.content.Context;
 import android.util.Log;
 
 public class FileManager {
 	
+	private int KEY_SIZE = 32;
+	private int ADDR_SIZE = 17;	// it's in the format AA:BB:CC:DD:EE:FF
+
 	private String CLASS_NAME = this.getClass().getSimpleName();
 	
 	private Context context;
 	
 	public FileManager(Context c) {
 		context = c;
-	}
-	
-	/* File format: 32 bytes of key, then a byte of the length of passcode, then
-	 * bytes of passcode, then byte of length of lock name, then bytes of lock name
-	 */
-	public void storeData(byte key[], String passcode, String lockName) {
-		int i;
-		byte buffer[] = new byte[key.length + passcode.getBytes().length + lockName.getBytes().length + 2];
-		for (i=0; i<key.length; i++)
-			buffer[i] = key[i];
-		buffer[i] = (byte) passcode.getBytes().length;
-		for (i=0; i<passcode.getBytes().length; i++)
-			buffer[i+1+key.length] = passcode.getBytes()[i];
-		buffer[i] = (byte) lockName.getBytes().length;
-		for (i=0; i<lockName.getBytes().length; i++)
-			buffer[i+2+key.length+passcode.getBytes().length] = lockName.getBytes()[i];
 	}
 	
 	/* Takes in a byte array, which will have been read from
@@ -57,19 +43,16 @@ public class FileManager {
 		} catch (Exception e) { Log.e("Error!", e.toString()); }
 	}
 
-	/* Reads each stored key/pass/id file and creates a new
-	 * KeyPassData object, returns an ArrayList of the objects. 
-	 */
-	public List<KeyPassData> readData() {
+	/* Reads each stored key/addr file and builds a HashMap out of them. */
+	public HashMap<String, String> getKeyAddrMap() {
 		File lockDir = new File(context.getFilesDir(),  "lockdir");
 		lockDir.mkdirs();
 		
-		List<KeyPassData> keyPassList = new ArrayList<KeyPassData>();
-		KeyPassData kpd;
+		HashMap<String, String> keyAddrMap = new HashMap<String, String>();
 		FileInputStream fileIn;
-		byte buffer[] = new byte[100];	// 100 bytes should be enough, right?
-		byte passcodeLen, lockIdLen;
-		String passcode = "", lockId = "";
+		byte buffer[] = new byte[KEY_SIZE+ADDR_SIZE];
+		String lockAddr = "";
+		String key = "";
 		
 		for (File f : lockDir.listFiles()) {
 			try {
@@ -78,15 +61,12 @@ public class FileManager {
 				fileIn.close();
 			} catch (Exception e) { Log.e("Error!", e.toString()); }
 		
-			passcodeLen = buffer[32];
-			lockIdLen = buffer[33+passcodeLen];
 			try {
-				passcode = new String(buffer, 33, passcodeLen, "ASCII");
-				lockId = new String(buffer, 34+passcodeLen, lockIdLen, "ASCII");
+				key = new String(buffer, 0, KEY_SIZE, "ASCII");
+				lockAddr = new String(buffer, KEY_SIZE, ADDR_SIZE, "ASCII");
 			} catch (Exception e) { Log.e("Error!", e.toString()); }
 		
-			kpd = new KeyPassData(buffer, passcode, lockId);
-			keyPassList.add(kpd);
+			keyAddrMap.put(lockAddr, key);
 		
 			Log.v(CLASS_NAME, f.toString());
 		}
@@ -94,6 +74,6 @@ public class FileManager {
 		if (lockDir.listFiles().length == 0)
 			Log.v(CLASS_NAME, "No files!");
 	
-		return keyPassList;
+		return keyAddrMap;
 	}
 }

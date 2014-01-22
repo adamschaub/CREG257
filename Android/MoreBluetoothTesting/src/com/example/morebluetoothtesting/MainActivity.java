@@ -1,10 +1,7 @@
 package com.example.morebluetoothtesting;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.util.List;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.app.Activity;
@@ -22,9 +19,6 @@ public class MainActivity extends Activity {
 	private String CLASS_NAME = this.getClass().getSimpleName();
 	
 	Magnetometer magListener = null;
-	List<KeyPassData> keyPassList = null;
-	KeyPassData currentKpd = null;
-	FileManager fm = null;
 	
 	private Intent mainIntent;
 	private MainService mainService;
@@ -50,84 +44,20 @@ public class MainActivity extends Activity {
 		bindService(mainIntent, con, Context.BIND_AUTO_CREATE);
 		startService(mainIntent);
 		
-		/* Load list of known keys/passes/ids */
-		//fm = new FileManager(getBaseContext());
-		//keyPassList = fm.readData();
-		//if (keyPassList.size() > 0) {
-		//	currentKpd = keyPassList.get(0);
+	    Button initButton = (Button) findViewById(R.id.initButtonId);
+	    initButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+			}
+		});
 
-//			sensorManager = (SensorManager)getBaseContext().getSystemService(Context.SENSOR_SERVICE);
-//	        if ((mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)) != null) {
-//	        	Log.v(CLASS_NAME, "There is a magnetomter!");
-//	        	//sensorManager.registerListener(magListener, mag, SensorManager.SENSOR_DELAY_FASTEST);
-//	        	HandlerThread hThread = new HandlerThread("hThread");
-//	        	hThread.start();
-//	        	Handler h = new Handler(hThread.getLooper());
-//	        	sensorManager.registerListener(magListener, mag, SensorManager.SENSOR_DELAY_FASTEST, h);
-//	        } else {
-//	        	Log.v(CLASS_NAME, "There is no magnetomter!");
-//	        }
-//			
-//			Log.v(CLASS_NAME, currentKpd.passcode);
-//			Log.v(CLASS_NAME, currentKpd.lockName);
-//		}
+		/* TODO: Share functionality should be implemented via requests to server */
+//        Button shareButton = (Button) findViewById(R.id.shareKeyButtonId);
+//        shareButton.setOnClickListener(new View.OnClickListener () {
+//        	public void onClick(View v) {
 //
-//        Button initButton = (Button) findViewById(R.id.initButtonId);
-//        initButton.setOnClickListener(new View.OnClickListener() {
-//			@Override
-//			public void onClick(View v) {
-//				if (btConnection == null) {
-//					btConnection = new BluetoothConnection(currentKpd.lockName);
-//					btConnection.connect();
-//				}
-//				
-//				/*byte initSeq[] = {'1', '2', '3', '4', '5', '6', '7', '8' };
-//				btConnection.write(initSeq);
-//				
-//				btConnection.write32(currentKpd.passcode.getBytes());
-//				btConnection.write(currentKpd.key);*/
-//			}
-//		});
-
-		/* TODO: On lock/unlock buttons, need to message service and have that try to execute the command. */
-
-        Button shareButton = (Button) findViewById(R.id.shareKeyButtonId);
-        shareButton.setOnClickListener(new View.OnClickListener () {
-        	public void onClick(View v) {
-        		int i;
-        		byte buffer[] = new byte[currentKpd.key.length + currentKpd.passcode.getBytes().length + currentKpd.lockName.getBytes().length + 2];
-        		for (i=0; i<currentKpd.key.length; i++)
-        			buffer[i] = currentKpd.key[i];
-        		buffer[i] = (byte) currentKpd.passcode.getBytes().length;
-        		for (i=0; i<currentKpd.passcode.getBytes().length; i++)
-        			buffer[i+1+currentKpd.key.length] = currentKpd.passcode.getBytes()[i];
-        		buffer[i+1+currentKpd.key.length] = (byte) currentKpd.lockName.getBytes().length;
-        		for (i=0; i<currentKpd.lockName.getBytes().length; i++)
-        			buffer[i+2+currentKpd.key.length+currentKpd.passcode.getBytes().length] = currentKpd.lockName.getBytes()[i];
-        		
-        		/* Create file in internal storage (i.e., it's private to our app) */
-        		String filename = "tmpfile.phnky";
-        		File file = new File(getBaseContext().getFilesDir(), filename);
-        		FileOutputStream outputStream;
-
-        		try {
-	        		outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
-	        		outputStream.write(buffer);
-	        		outputStream.close();
-        		} catch (Exception e) { Log.e("Error!", e.toString()); }
-        		
-        		/* Send email, with tmpfile.phnky attached */
-        		Intent sendIntent;
-
-        		sendIntent = new Intent(Intent.ACTION_SEND);
-        		sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Super secret email!");
-        		sendIntent.putExtra(Intent.EXTRA_TEXT, "Super secret text!");
-        		sendIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse("content://" + "com.example.morebluetoothtesting.provider" + "/" + file.getPath()));
-        		sendIntent.setType("text/plain");
-
-        		startActivity(Intent.createChooser(sendIntent, "Send Mail"));
-        	}
-        });
+//        	}
+//        });
         
         Button deleteButton = (Button) findViewById(R.id.delButtonId);
         deleteButton.setOnClickListener(new View.OnClickListener () {
@@ -147,22 +77,11 @@ public class MainActivity extends Activity {
 	protected void onStart() {
 		super.onStart();
 		Log.v(CLASS_NAME, "onStart");
-		//startService(btIntent);
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		
-/*		if (keyPassList == null || currentKpd == null) {
-			keyPassList = fm.readData();
-			if (keyPassList.size() > 0) {
-				currentKpd = keyPassList.get(0);
-			
-				Log.v(CLASS_NAME, currentKpd.passcode);
-				Log.v(CLASS_NAME, currentKpd.lockName);
-			}
-		}*/
 	}
 
 	@Override

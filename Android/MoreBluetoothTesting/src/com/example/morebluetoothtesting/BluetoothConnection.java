@@ -17,6 +17,8 @@ public class BluetoothConnection {
 	
 	private String CLASS_NAME = this.getClass().getSimpleName();
 	
+	private static BluetoothConnection instance = null;
+
 	public ConnectedThread mConnectedThread;
     private AcceptThread mInsecureAcceptThread;
 	
@@ -34,6 +36,12 @@ public class BluetoothConnection {
     public static final int RESPONSE_NAK = 1;
     public static final int RESPONSE_ACK = 2;
     
+    public static synchronized BluetoothConnection getInstance() {
+		if (instance == null)
+			instance = new BluetoothConnection();
+		return instance;
+	}
+
 	/**
      * Start the ConnectedThread to begin managing a Bluetooth connection
      * @param socket  The BluetoothSocket on which the connection was made
