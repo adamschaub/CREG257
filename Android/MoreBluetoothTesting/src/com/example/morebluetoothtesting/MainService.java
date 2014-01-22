@@ -36,6 +36,7 @@ public class MainService extends Service {
 	/* Receives Bluetooth related messages (e.g. when BT is connected) */
 	public final BroadcastReceiver btReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
+
 			if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(intent.getAction())) {
 				String connectedAddr = ((BluetoothDevice)intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)).getAddress();
 				if (keyAddrMap.get(connectedAddr) == null)
@@ -160,6 +161,12 @@ public class MainService extends Service {
 		btConnection.start();
 
 		return START_STICKY;
+	}
+
+	@Override
+	public void onDestroy () {
+		super.onDestroy();
+		unregisterReceiver(btReceiver);
 	}
 
 	@Override
