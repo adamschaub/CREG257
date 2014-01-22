@@ -16,9 +16,10 @@
 #define	TRANSMIT_FREQ	101	// sampling freq of phone, in hertz
 #define PERIOD (1000000/TRANSMIT_FREQ)	// period, in us
 
-#define BT_RX		   2
-#define BT_TX		   3
+#define BT_RX		   	2
+#define BT_TX		   	3
 #define BT_CMDBUF_LEN   50
+#define MAC_ADDR_SIZE	12
 
 #define UNCONNECTED	0
 #define CONNECTING	1
@@ -27,27 +28,6 @@
 #define CMD_LOCK	0
 #define CMD_UNLOCK	1
 #define CMD_NONE	2
-
-SoftwareSerial btSerial(BT_RX, BT_TX);
-HardwareSerial dbSerial = Serial;
-
-uint8_t db_buf[50];
-uint8_t db_buf_pos = 0;
-uint8_t bt_buf[50];
-uint8_t bt_buf_pos = 0;
-
-uint8_t bt_state = UNCONNECTED;
-
-uint8_t num_known_phones;
-uint8_t current_phone;
-uint8_t *known_phones[10];
-
-AES aes;
-
-byte key[32];
-uint8_t inBytes[32];
-uint8_t passcode[32] = {'1', '2', '3', '4', '5', '6', '7', '8'};	// initially set to init sequence
-uint8_t passcodeLen;
 
 void get_cmd(void);
 void do_mi_authentication(uint8_t);
@@ -61,6 +41,26 @@ void sendMIChallenge(uint8_t *);
 void transmitData(uint8_t *);
 void transmitByte(uint8_t);
 void preamble(void);
+
+typedef struct acl_entry {
+	uint8_t key[KEY_SIZE];
+	uint8_t mac_addr[MAC_ADDR_SIZE];
+} acl_entry_t;
+
+acl_entry_t acl[10];
+uint8_t acl_num_entries;
+uint8_t acl_current;
+
+HardwareSerial dbSerial = Serial;
+uint8_t db_buf[50];
+uint8_t db_buf_pos = 0;
+
+SoftwareSerial btSerial(BT_RX, BT_TX);
+uint8_t bt_buf[50];
+uint8_t bt_buf_pos = 0;
+uint8_t bt_state = UNCONNECTED;
+
+AES aes;
 
 void setup()
 {
@@ -82,8 +82,6 @@ void setup()
 
 	initLock();
 
-	aes.set_key(key, KEY_SIZE);
-
 	btSerial.write("$$$");
 	delay(2000);
 }
@@ -94,11 +92,8 @@ void loop()
 	if (bt_state == UNCONNECTED) {
 		bt_state = CONNECTING;
 		btSerial.write("C,");
-		btSerial.write((char *) known_phones[current_phone]);
+		btSerial.write((char *) acl[acl_current].mac_addr);
 		btSerial.write("\r");
-		current_phone++;
-		if (current_phone >= num_known_phones)
-			current_phone = 0;
 		delay(100);
 	}
 
@@ -109,12 +104,16 @@ void loop()
 		/* Connected to phone, so now listen for the command the phone wants us to execute */
 		if (checkData(bt_buf, (uint8_t *) "+CONNECT", 8)) {
 			bt_state = CONNECTED;
+			aes.set_key(acl[acl_current].key, KEY_SIZE);
 			get_cmd();
 		}
 
 		/* Connection failed, set state to unconnected and we'll try to connect again at the top of loop() */
 		else if (checkData(bt_buf, (uint8_t *) "CONNECT failed", 14)) {
 			bt_state = UNCONNECTED;
+			acl_current++;
+			if (acl_current >= acl_num_entries)
+				acl_current = 0;
 		}
 
 		/* For some reason the module will occasionally reboot, if that happens enter CMD mode again */
@@ -178,49 +177,49 @@ void initLock(void)
 	digitalWrite(LOCKED_PIN, HIGH);
 	digitalWrite(UNLOCKED_PIN, HIGH);
 
-	passcodeLen = EEPROM.read(0);
-
-	/* If we don't have a key/passcode yet... */
-	if (passcodeLen == 255) {
-		do {
-			//getData(8);
-		} while (!checkData(inBytes, passcode, 8));
-		dbSerial.write("Got:");
-		dbSerial.write((uint8_t *) inBytes, 8);
-		
-		//getData(32);
-		for (int i=0; i<32; i++) {
-			if (inBytes[i] == 0) {
-				passcodeLen = i-1;
-				EEPROM.write(0, passcodeLen);
-				break;
-			}
-			passcode[i] = inBytes[i];
-			EEPROM.write(1+i, passcode[i]);
-		}
-		dbSerial.write("Passcode:");
-		dbSerial.write((uint8_t *) passcode, passcodeLen);
-
-		//getData(32);
-		for (int i=0; i<32; i++) {
-			key[i] = inBytes[i];
-			EEPROM.write(1+passcodeLen+i, key[i]);
-		}
-
-		dbSerial.write("Key:");
-		dbSerial.write((uint8_t *) key, 32);
+	/* Not initialized */
+	if (EEPROM.read(0) == 255) {
+		initACL();
 	} else {
-		for (int i=0; i<passcodeLen; i++)
-			passcode[i] = EEPROM.read(1+i);
-		for (int i=0; i<32; i++)
-			key[i] = EEPROM.read(1+passcodeLen+i);
+		readACL();
 	}
 
-	num_known_phones = 1;
-	current_phone = 0;
-	known_phones[0] = (uint8_t *) "78521A53544B";
-
 	digitalWrite(UNLOCKED_PIN, LOW);
+}
+
+/* Inits ACL struct and waits for first ACL entry to be sent from phone */
+void initACL()
+{
+	uint8_t *key = (uint8_t *) "12345678123456781234567812345678";
+	uint8_t *mac_addr = (uint8_t *) "78521A53544B";
+
+	uint8_t *acl_ptr = (uint8_t *) acl;
+	uint16_t eeprom_addr = 1;
+	for (; acl_ptr < (uint8_t *) acl + (uint8_t) KEY_SIZE; acl_ptr++, eeprom_addr++, key++) {
+		EEPROM.write(eeprom_addr, *key);
+		*acl_ptr = *key;
+	}
+	for (; acl_ptr < ((uint8_t *) acl + (uint8_t) KEY_SIZE + (uint8_t) MAC_ADDR_SIZE);
+			acl_ptr++, eeprom_addr++, mac_addr++) {
+		EEPROM.write(eeprom_addr, *mac_addr);
+		*acl_ptr = *mac_addr;
+	}
+
+	acl_current = 0;
+	acl_num_entries = 1;
+	EEPROM.write(0, 1);
+}
+
+/* Reads in the ACL struct from EEPROM */
+void readACL()
+{
+	uint8_t *acl_ptr = (uint8_t *) acl;
+	uint16_t eeprom_addr = 1;
+	acl_num_entries = EEPROM.read(0);
+	for (; acl_ptr < (uint8_t *) acl + (uint8_t) (acl_num_entries *sizeof(acl_entry_t)); acl_ptr++, eeprom_addr++) {
+		*acl_ptr = EEPROM.read(eeprom_addr);
+	}
+	acl_current = 0;
 }
 
 void unlock(void)
@@ -317,7 +316,7 @@ int readBTSerialEnc()
 /* Returns 1 if equal, 0 otherwise */
 int checkData(uint8_t *received, uint8_t *target, int len)
 {
-	for (int i=0; i<len; i++) {
+	for (uint8_t i=0; i<len; i++) {
 		if (received[i] != target[i])
 			return 0;
 	}
@@ -339,7 +338,7 @@ void transmitData(uint8_t *data)
 
 void transmitByte(uint8_t data)
 {
-	for(int i=0; i<8; i++) {
+	for(uint8_t i=0; i<8; i++) {
 		digitalWrite(13, data & 0x01);
 		delayMicroseconds(PERIOD);
 		data >>= 1;
@@ -348,7 +347,7 @@ void transmitByte(uint8_t data)
 
 void preamble(void)
 {
-	for(int i=0; i<8; i++) {
+	for(uint8_t i=0; i<8; i++) {
 		digitalWrite(13, HIGH);
 		delayMicroseconds(PERIOD);
 		digitalWrite(13, LOW);
