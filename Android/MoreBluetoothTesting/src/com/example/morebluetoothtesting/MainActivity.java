@@ -22,6 +22,7 @@ public class MainActivity extends Activity {
 	
 	private Intent mainIntent;
 	private MainService mainService;
+	private Activity thisActivity = this;
 	
 	private ServiceConnection con = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -41,13 +42,23 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		
 		mainIntent = new Intent(this, MainService.class);
-		bindService(mainIntent, con, Context.BIND_AUTO_CREATE);
+		//bindService(mainIntent, con, Context.BIND_AUTO_CREATE);
 		startService(mainIntent);
 		
 	    Button initButton = (Button) findViewById(R.id.initButtonId);
 	    initButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				BluetoothConnection btConnection = BluetoothConnection.getInstance();
+
+				/* Stop the service, otherwise it'll see the BT connect and try starting the auth sequence */
+				stopService(mainIntent);
+
+				btConnection.connect();
+				btConnection.write("ABCDEFGH".getBytes());
+				btConnection.write("12345678123456781234567812345678\r".getBytes());
+
+				startService(mainIntent);
 			}
 		});
 

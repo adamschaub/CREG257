@@ -29,6 +29,6 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_marginTop="68dp"
-        android:text="Delete Lock Files" />
+        android:text="Reset" />
 
 </RelativeLayout>

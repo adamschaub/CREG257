@@ -18,7 +18,7 @@
 
 #define BT_RX		   	2
 #define BT_TX		   	3
-#define BT_CMDBUF_LEN   50
+#define BT_CMDBUF_LEN   100
 #define MAC_ADDR_SIZE	12
 
 #define UNCONNECTED	0
@@ -52,11 +52,11 @@ uint8_t acl_num_entries;
 uint8_t acl_current;
 
 HardwareSerial dbSerial = Serial;
-uint8_t db_buf[50];
+uint8_t db_buf[BT_CMDBUF_LEN];
 uint8_t db_buf_pos = 0;
 
 SoftwareSerial btSerial(BT_RX, BT_TX);
-uint8_t bt_buf[50];
+uint8_t bt_buf[BT_CMDBUF_LEN];
 uint8_t bt_buf_pos = 0;
 uint8_t bt_state = UNCONNECTED;
 
@@ -190,8 +190,22 @@ void initLock(void)
 /* Inits ACL struct and waits for first ACL entry to be sent from phone */
 void initACL()
 {
-	uint8_t *key = (uint8_t *) "12345678123456781234567812345678";
-	uint8_t *mac_addr = (uint8_t *) "78521A53544B";
+	/* When the phone connects, we'll get output from the BT module that looks like:
+		+CONNECT,<12 bytes of phone BT MAC addr>,0<init passcode><key>
+	 * Where the phone's MAC address is 9 bytes from start of buf, passcode is 23, and key is
+	 * 31. */
+	uint8_t *mac_addr = bt_buf + 9;
+	uint8_t *key = bt_buf + 31;
+
+	/* Wait for phone to connect and send init info */
+	while (1) {
+		if (readBTSerial()) {
+			if (checkData(bt_buf+23, (uint8_t *) "ABCDEFGH", 8)) {
+				bt_state = CONNECTED;
+				break;	// got a valid init string, so break out of while loop
+			}
+		}
+	}
 
 	uint8_t *acl_ptr = (uint8_t *) acl;
 	uint16_t eeprom_addr = 1;

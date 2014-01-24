@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothAdapter;
@@ -20,6 +21,7 @@ public class BluetoothConnection {
 	private static BluetoothConnection instance = null;
 
 	public ConnectedThread mConnectedThread;
+    private ConnectThread mConnectThread;
     private AcceptThread mInsecureAcceptThread;
 	
 	private int mState;
@@ -337,8 +339,115 @@ public class BluetoothConnection {
             }
         }
     }
+
+    /**
+     * This thread runs while attempting to make an outgoing connection
+     * with a device. It runs straight through; the connection either
+     * succeeds or fails.
+     */
+    private class ConnectThread extends Thread {
+		private final BluetoothSocket mmSocket;
+		private final BluetoothDevice mmDevice;
+		private String mSocketType;
+
+		public ConnectThread(BluetoothDevice device) {
+			mmDevice = device;
+			BluetoothSocket tmp = null;
+
+			// Get a BluetoothSocket for a connection with the
+			// given BluetoothDevice
+			try {
+				tmp = device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+			} catch (IOException e) {
+				Log.e("Exception!", "Socket Type: " + mSocketType + "create() failed", e);
+			}
+			mmSocket = tmp;
+		}
+
+		public void run() {
+			Log.i("Infoooo", "BEGIN mConnectThread SocketType:" + mSocketType);
+			setName("ConnectThread" + mSocketType);
+
+			// Always cancel discovery because it will slow down a connection
+			// mAdapter.cancelDiscovery();
+
+			// Make a connection to the BluetoothSocket
+			try {
+				// This is a blocking call and will only return on a
+				// successful connection or an exception
+				mmSocket.connect();
+			} catch (IOException e) {
+				// Close the socket
+				try {
+					mmSocket.close();
+				} catch (IOException e2) {
+					Log.e("Exception!", "unable to close() " + mSocketType +
+							" socket during connection failure", e2);
+				}
+				connectionFailed();
+				return;
+			}
+
+			// Reset the ConnectThread because we're done
+			synchronized (BluetoothConnection.this) {
+				mConnectThread = null;
+			}
+
+			// Start the connected thread
+			connected(mmSocket, mmDevice, mSocketType);
+		}
+
+		public void cancel() {
+			try {
+				mmSocket.close();
+			} catch (IOException e) {
+				Log.e("Exception!", "close() of connect " + mSocketType + " socket failed", e);
+			}
+		}
+    }
+
+    /* Assumes that device `deviceName` has already been paired. */
+	public void connect () {
+		if (mBluetoothAdapter == null) {
+			Log.e("Error!", "Bluetooth is disabled!");
+		}
+
+		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+		// If there are paired devices
+		if (pairedDevices.size() > 0) {
+			// Loop through paired devices
+			for (BluetoothDevice device : pairedDevices) {
+				// This is the device we are looking for!
+				if (device.getName().startsWith("Phnky")) {
+					targetDevice = device;
+					break;
+				}
+			}
+		}
+
+		if (targetDevice == null) {
+			Log.e("Error!", "Couldn't find target device!");
+			return;
+		}
+
+		// Cancel any thread attempting to make a connection
+		if (mState == STATE_CONNECTING) {
+			if (mConnectThread != null) {mConnectThread.cancel(); mConnectThread = null;}
+		}
+
+		// Cancel any thread currently running a connection
+		if (mConnectedThread != null) {mConnectedThread.cancel(); mConnectedThread = null;}
+
+		// Start the thread to connect with the given device
+		mConnectThread = new ConnectThread(targetDevice);//, secure);
+		mConnectThread.start();
+		setState(STATE_CONNECTING);
+		while(getState() != STATE_CONNECTED);
+		Log.v("Done", "DOOOONE");
+	}
 	
 	private BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private BluetoothDevice targetDevice = null;
 
 	public BluetoothConnection() {}
 }

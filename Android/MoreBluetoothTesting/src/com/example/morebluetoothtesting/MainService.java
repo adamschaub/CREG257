@@ -160,7 +160,7 @@ public class MainService extends Service {
 
 		btConnection.start();
 
-		return START_STICKY;
+		return START_NOT_STICKY;
 	}
 
 	@Override
