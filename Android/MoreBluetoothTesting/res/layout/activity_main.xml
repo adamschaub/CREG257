@@ -31,4 +31,22 @@
         android:layout_marginTop="68dp"
         android:text="Reset" />
 
+    <Button
+        android:id="@+id/lockButton"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/delButtonId"
+        android:layout_alignLeft="@+id/shareKeyButtonId"
+        android:text="Lock" />
+
+    <Button
+        android:id="@+id/unlockButton"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/delButtonId"
+        android:layout_toRightOf="@+id/shareKeyButtonId"
+        android:text="Unlock" />
+
 </RelativeLayout>

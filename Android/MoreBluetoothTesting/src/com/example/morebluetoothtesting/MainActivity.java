@@ -45,8 +45,8 @@ public class MainActivity extends Activity {
 		//bindService(mainIntent, con, Context.BIND_AUTO_CREATE);
 		startService(mainIntent);
 		
-	    Button initButton = (Button) findViewById(R.id.initButtonId);
-	    initButton.setOnClickListener(new View.OnClickListener() {
+		Button initButton = (Button) findViewById(R.id.initButtonId);
+		initButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				BluetoothConnection btConnection = BluetoothConnection.getInstance();
@@ -62,26 +62,44 @@ public class MainActivity extends Activity {
 			}
 		});
 
-		/* TODO: Share functionality should be implemented via requests to server */
-//        Button shareButton = (Button) findViewById(R.id.shareKeyButtonId);
-//        shareButton.setOnClickListener(new View.OnClickListener () {
-//        	public void onClick(View v) {
-//
-//        	}
-//        });
-        
-        Button deleteButton = (Button) findViewById(R.id.delButtonId);
-        deleteButton.setOnClickListener(new View.OnClickListener () {
-        	public void onClick(View v) {
-        		File lockDir = new File(getBaseContext().getFilesDir(),  "lockdir");
-        		lockDir.mkdirs();
-        		
-        		for (File f : lockDir.listFiles()) {
-        			f.delete();
-        		}
-        	}
-        });
-        
+		Button lockButton = (Button) findViewById(R.id.lockButton);
+		lockButton.setOnClickListener(new View.OnClickListener () {
+			public void onClick(View v) {
+				try {
+					String res = new WebRequest().execute("lock request").get();
+				} catch (Exception e) { Log.e("Exception!", e.toString()); }
+			}
+		});
+
+		Button unlockButton = (Button) findViewById(R.id.unlockButton);
+		unlockButton.setOnClickListener(new View.OnClickListener () {
+			public void onClick(View v) {
+				try {
+					String res = new WebRequest().execute("unlock request").get();
+				} catch (Exception e) { Log.e("Exception!", e.toString()); }
+			}
+		});
+
+		Button shareButton = (Button) findViewById(R.id.shareKeyButtonId);
+		shareButton.setOnClickListener(new View.OnClickListener () {
+			public void onClick(View v) {
+				try {
+					String res = new WebRequest().execute("share request").get();
+				} catch (Exception e) { Log.e("Exception!", e.toString()); }
+			}
+		});
+
+		Button deleteButton = (Button) findViewById(R.id.delButtonId);
+		deleteButton.setOnClickListener(new View.OnClickListener () {
+			public void onClick(View v) {
+				File lockDir = new File(getBaseContext().getFilesDir(),  "lockdir");
+				lockDir.mkdirs();
+
+				for (File f : lockDir.listFiles()) {
+					f.delete();
+				}
+			}
+		});
 	}
 	
 	@Override
