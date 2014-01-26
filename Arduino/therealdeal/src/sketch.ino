@@ -2,6 +2,9 @@
 #include <SoftwareSerial.h>
 #include "AES.h"
 
+#define sbi(a,b) (a) |= (1 << (b))
+#define cbi(a,b) (a) &= ~(1 << (b))
+
 #define KEY_SIZE (256/8)	// int is (I believe) 8 bits, so use byte size instead of bit size
 
 #define LOCKED_PIN 		12
@@ -12,7 +15,7 @@
 #define A2				4	// H-bridge control 2A
 #define MOTOR_READING	5	// analog input for reading motor current draw
 
-#define MI_OUT_PIN		13
+#define MI_OUT_PIN		13 //4
 #define	TRANSMIT_FREQ	101	// sampling freq of phone, in hertz
 #define PERIOD (1000000/TRANSMIT_FREQ)	// period, in us
 
@@ -69,6 +72,11 @@ void setup()
 
 	pinMode(LOCKED_PIN, OUTPUT);
 	pinMode(UNLOCKED_PIN, OUTPUT);
+pinMode(4, OUTPUT);
+pinMode(13, OUTPUT);
+for(;;) {
+sendMIChallenge((uint8_t *)"ABCDEFGH");
+}
 
 	pinMode(EN12, OUTPUT);  // 1,2EN pin
 	pinMode(A1, OUTPUT);	// 1A pin
@@ -353,7 +361,11 @@ void transmitData(uint8_t *data)
 void transmitByte(uint8_t data)
 {
 	for(uint8_t i=0; i<8; i++) {
-		digitalWrite(13, data & 0x01);
+		if (data & 0x01)
+			sbi(PORTB, 5);
+		else
+			cbi(PORTB, 5);
+		//digitalWrite(MI_OUT_PIN, data & 0x01);
 		delayMicroseconds(PERIOD);
 		data >>= 1;
 	}
@@ -362,9 +374,11 @@ void transmitByte(uint8_t data)
 void preamble(void)
 {
 	for(uint8_t i=0; i<8; i++) {
-		digitalWrite(13, HIGH);
+//		digitalWrite(MI_OUT_PIN, HIGH);
+		sbi(PORTB, 5);
 		delayMicroseconds(PERIOD);
-		digitalWrite(13, LOW);
+//		digitalWrite(MI_OUT_PIN, LOW);
+		cbi(PORTB, 5);
 		delayMicroseconds(PERIOD);
 	}
 }
