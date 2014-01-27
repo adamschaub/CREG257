@@ -1,6 +1,7 @@
 
 package com.example.morebluetoothtesting;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 import javax.crypto.Cipher;
@@ -86,6 +87,20 @@ public class MainService extends Service {
 					if (miData[i] > 'z' || miData[i] < 'A')	{	// Not A-Za-z, not valid
 						miDataOK = false;
 						break;
+					}
+				}
+				/* If that wasn't valid, try this... */
+				if (!miDataOK) {
+					ByteBuffer buf = ByteBuffer.wrap(miData);
+					long shifted = ((buf.getLong()) >>> 2) | 0x4000000000000000L;
+					ByteBuffer bufShifted = ByteBuffer.allocate(8);
+					bufShifted.putLong(shifted);
+					miData = bufShifted.array();
+					for (int i=0; i<8; i++) {
+						if (miData[i] > 'z' || miData[i] < 'A')	{	// Not A-Za-z, not valid
+							miDataOK = false;
+							break;
+						}
 					}
 				}
 			} while (!miDataOK);
