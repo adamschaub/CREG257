@@ -1,0 +1,13 @@
+{
+    "name": "PhoneKeyServer",
+    "version": "0.0.0",
+    "description": "Server application for Phone-Key electronic door lock.",
+    "dependencies": {
+        "express": "*",
+        "hbs": "*",
+        "net": "*",
+        "http": "*",
+        "mongoose": "*",
+        "bcrypt": "*"
+    }
+}
