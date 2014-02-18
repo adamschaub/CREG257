@@ -13,9 +13,6 @@
   "scripts": {
     "start": "node app.js"
   },
-  "engines": {
-    "node": "*"
-  },
   "main": "app.js",
   "devDependencies": {},
   "repository": {
