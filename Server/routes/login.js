@@ -23,12 +23,8 @@ exports.post = function(req, res, next) {
             user.comparePassword(password, function(err, match) {
                 if(err) next(err);
                 if(match) {
-                    req.session.userId = user.username;
-                    if(req.session.lastPage)
-                        base.redirect(res, req.session.lastPage);
-                    else
-                        base.redirect(res, '/');
-                    //set last login time
+                    req.session.userId = user.username; //set session
+                    base.redirect(res, '/');
                 }
                 else {
                     //consider counting failed attempts over a time period

@@ -41,7 +41,7 @@ app.post('/logout', logout.post);
 app.get('/register', register.get);
 app.post('/register', register.post);
 
-//404 status error. Use as lasts middleware (e.g. nothing was caught)
+//404 status error. Use as last middleware (e.g. nothing was caught)
 app.use(function(req, res) {
     res.status(404);
 
@@ -61,6 +61,7 @@ var port = process.env.PORT || 5000;
 app.listen(port, function(){
     Log.v("HTTP listening on " + port);
 });
+
 
 ///////////////////////////////////////
 //TCP SERVER
@@ -83,11 +84,12 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
         if(text[1] === "update") {
             Log.v("Update requested: " + text[2]);
         }
-        else if(text[1] === "new") {
-            Log.v("New user: " + text[2]);
+        else if(text[1] === "status") {
+            Log.v("Status from " + socks[con.name]);
+            Log.v(text[2]);
         }
         else if(text[1] === "id") {
-            Log.v("Registering ID " + text[2] + " to connection " + con.name);
+            Log.d("Registering ID " + text[2] + " to connection " + con.name);
             socks[con.name] = text[2];
         }
         else if(text === "none") {
@@ -95,14 +97,14 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
             if(text[1] === "getlocks") {
                 con.write(JSON.stringify(socks));
             }
-            else if(text[1] === "exit") {+9999999999999999999999999999999999
+            else if(text[1] === "exit") {
                 con.end();
             }
         }
     });
 
     con.on('end', function () {
-        Log.v(con.name + " has disconnected. Removing from connections.");
+        Log.d(con.name + " has disconnected. Removing from connections.");
         delete socks[con.name];
     });
 }).listen(8080);

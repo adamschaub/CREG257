@@ -21,12 +21,19 @@ exports.post = function(req, res) {
         emailError: false
     };
 
-    database.User.findOne({'username': username}, function(err, user) {
+    //TODO: catch and handle errors
+    database.User.find({'username': username}, function(err, users) {
         if(err) throw err;
-        else if(user) registrationError.usernameError = true;
-        else database.User.findOne({'email': email}, function(err, user) {
+        else if(users.length !== 0) {
+            registrationError.usernameError = true;
+            base.redirect(res, '/register');
+        }
+        else database.User.find({'email': email}, function(err, users) {
             if(err) throw err;
-            else if(user) registrationError.emailError = true;
+            else if(users.length !== 0) {
+                registrationError.emailError = true;
+                base.redirect(res, '/register');
+            }
             else {
                 var nUser = new database.User({
                     'username': username,
@@ -41,8 +48,9 @@ exports.post = function(req, res) {
                 });
                 nUser.save(function(err, user, numAffected) {
                     if(err) throw err;
-                    base.redirect(res, '/');
-                });
+                    req.session.userId=user.username;
+                    base.redirect(res, '/')
+;                });
             }
         });
     });
