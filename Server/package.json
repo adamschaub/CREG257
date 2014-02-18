@@ -11,12 +11,12 @@
     "bcrypt": "*"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node app.js"
   },
   "engines": {
     "node": "*"
   },
-  "main": "server.js",
+  "main": "app.js",
   "devDependencies": {},
   "repository": {
     "type": "git",
