@@ -1,6 +1,7 @@
 #include <EEPROM.h>
 #include <SoftwareSerial.h>
 #include "AES.h"
+#include "LowPower.h"
 
 #define sbi(a,b) (a) |= (1 << (b))
 #define cbi(a,b) (a) &= ~(1 << (b))
@@ -8,14 +9,14 @@
 #define KEY_SIZE (256/8)	// int is (I believe) 8 bits, so use byte size instead of bit size
 
 #define LOCKED_PIN 		12
-#define UNLOCKED_PIN	8
+#define UNLOCKED_PIN	9
 
 #define	EN12			6	// Enable H-bridge outputs 1 and 2
 #define A1				7	// H-bridge control 1A
 #define A2				4	// H-bridge control 2A
 #define MOTOR_READING	5	// analog input for reading motor current draw
 
-#define MI_OUT_PIN		13 //4
+#define MI_OUT_PIN		10	// PB2
 #define	TRANSMIT_FREQ	101	// sampling freq of phone, in hertz
 #define PERIOD (1000000/TRANSMIT_FREQ)	// period, in us
 
@@ -50,7 +51,7 @@ typedef struct acl_entry {
 	uint8_t mac_addr[MAC_ADDR_SIZE];
 } acl_entry_t;
 
-acl_entry_t acl[10];
+acl_entry_t acl[3];
 uint8_t acl_num_entries;
 uint8_t acl_current;
 
@@ -67,16 +68,16 @@ AES aes;
 
 void setup()
 {
+    pinMode(12, OUTPUT);
+    digitalWrite(12, HIGH);
+
 	dbSerial.begin(115200);
 	btSerial.begin(9600);   // SoftwareSerial was having trouble at 115200
 
+//	ADCSRA &= ~ bit(ADEN); bitSet(PRR, PRADC);   // Disable the ADC to save power
+
 	pinMode(LOCKED_PIN, OUTPUT);
 	pinMode(UNLOCKED_PIN, OUTPUT);
-pinMode(4, OUTPUT);
-pinMode(13, OUTPUT);
-for(;;) {
-sendMIChallenge((uint8_t *)"ABCDEFGH");
-}
 
 	pinMode(EN12, OUTPUT);  // 1,2EN pin
 	pinMode(A1, OUTPUT);	// 1A pin
@@ -90,21 +91,28 @@ sendMIChallenge((uint8_t *)"ABCDEFGH");
 
 	initLock();
 
+	digitalWrite(UNLOCKED_PIN, HIGH);
+	btSerial.write("$$$");
+	delay(1000);
+	btSerial.write("$$$\r");
+	delay(1000);
 	btSerial.write("$$$");
 	delay(2000);
+	digitalWrite(UNLOCKED_PIN, LOW);
 }
 
 void loop()
 {
 	/* Try connecting to phone if not currently connected or trying to connect */
 	if (bt_state == UNCONNECTED) {
-		bt_state = CONNECTING;
+	//	bt_state = CONNECTING;
 		btSerial.write("C,");
+//		btSerial.write("78521A53544B");
 		btSerial.write((char *) acl[acl_current].mac_addr);
 		btSerial.write("\r");
 		delay(100);
+//		LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
 	}
-
 	/* Wait for the connection status message from the BT module.
 	 * This will be unencrypted, because it's coming directly from the module */
 	if (readBTSerial()) {
@@ -113,9 +121,9 @@ void loop()
 		if (checkData(bt_buf, (uint8_t *) "+CONNECT", 8)) {
 			bt_state = CONNECTED;
 			aes.set_key(acl[acl_current].key, KEY_SIZE);
+			aes.set_key((uint8_t *) "12345678123456781234567812345678", 32);
 			get_cmd();
 		}
-
 		/* Connection failed, set state to unconnected and we'll try to connect again at the top of loop() */
 		else if (checkData(bt_buf, (uint8_t *) "CONNECT failed", 14)) {
 			bt_state = UNCONNECTED;
@@ -130,6 +138,7 @@ void loop()
 			bt_state = UNCONNECTED;
 		}
 	}
+	delay(2000);
 }
 
 /* Connected to phone, so now listen for the command to be sent from the phone */
@@ -202,6 +211,7 @@ void initACL()
 		+CONNECT,<12 bytes of phone BT MAC addr>,0<init passcode><key>
 	 * Where the phone's MAC address is 9 bytes from start of buf, passcode is 23, and key is
 	 * 31. */
+#if 0
 	uint8_t *mac_addr = bt_buf + 9;
 	uint8_t *key = bt_buf + 31;
 
@@ -214,6 +224,9 @@ void initACL()
 			}
 		}
 	}
+#endif
+	uint8_t *key = (uint8_t *) "12345678123456781234567812345678";
+	uint8_t *mac_addr = (uint8_t *) "78521A53544B";
 
 	uint8_t *acl_ptr = (uint8_t *) acl;
 	uint16_t eeprom_addr = 1;
@@ -361,12 +374,17 @@ void transmitData(uint8_t *data)
 void transmitByte(uint8_t data)
 {
 	for(uint8_t i=0; i<8; i++) {
-		if (data & 0x01)
-			sbi(PORTB, 5);
-		else
-			cbi(PORTB, 5);
-		//digitalWrite(MI_OUT_PIN, data & 0x01);
+#ifdef UNO
+		digitalWrite(MI_OUT_PIN, data & 0x01);
 		delayMicroseconds(PERIOD);
+#else
+		if (data & 0x01)
+			sbi(PORTB, 2);
+		else
+			cbi(PORTB, 2);
+		delay(10);
+		delayMicroseconds(250);
+#endif
 		data >>= 1;
 	}
 }
@@ -374,11 +392,18 @@ void transmitByte(uint8_t data)
 void preamble(void)
 {
 	for(uint8_t i=0; i<8; i++) {
-//		digitalWrite(MI_OUT_PIN, HIGH);
-		sbi(PORTB, 5);
+#ifdef UNO
+		digitalWrite(MI_OUT_PIN, HIGH);
 		delayMicroseconds(PERIOD);
-//		digitalWrite(MI_OUT_PIN, LOW);
-		cbi(PORTB, 5);
+		digitalWrite(MI_OUT_PIN, LOW);
 		delayMicroseconds(PERIOD);
+#else
+		sbi(PORTB, 2);
+		delay(10);
+		delayMicroseconds(250);
+		cbi(PORTB, 2);
+		delay(10);
+		delayMicroseconds(250);
+#endif
 	}
 }
