@@ -1,1 +1,0 @@
-mongo phnky --eval "db.dropDatabase(); db.copyDatabase('phone-key', 'phnky', 'troup.mongohq.com:10036/phone-key', 'ams314', 'ams314');" 
