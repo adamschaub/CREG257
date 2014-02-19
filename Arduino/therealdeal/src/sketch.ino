@@ -8,15 +8,15 @@
 
 #define KEY_SIZE (256/8)	// int is (I believe) 8 bits, so use byte size instead of bit size
 
-#define LOCKED_PIN 		12
-#define UNLOCKED_PIN	9
+#define LOCKED_PIN 		5	// PD5
+#define UNLOCKED_PIN	6	// PD6
 
 #define	EN12			6	// Enable H-bridge outputs 1 and 2
 #define A1				7	// H-bridge control 1A
 #define A2				4	// H-bridge control 2A
 #define MOTOR_READING	5	// analog input for reading motor current draw
 
-#define MI_OUT_PIN		10	// PB2
+#define MI_OUT_PIN		8	// PB0
 #define	TRANSMIT_FREQ	101	// sampling freq of phone, in hertz
 #define PERIOD (1000000/TRANSMIT_FREQ)	// period, in us
 
@@ -379,9 +379,9 @@ void transmitByte(uint8_t data)
 		delayMicroseconds(PERIOD);
 #else
 		if (data & 0x01)
-			sbi(PORTB, 2);
+			sbi(PORTB, 0);
 		else
-			cbi(PORTB, 2);
+			cbi(PORTB, 0);
 		delay(10);
 		delayMicroseconds(250);
 #endif
@@ -398,10 +398,10 @@ void preamble(void)
 		digitalWrite(MI_OUT_PIN, LOW);
 		delayMicroseconds(PERIOD);
 #else
-		sbi(PORTB, 2);
+		sbi(PORTB, 0);
 		delay(10);
 		delayMicroseconds(250);
-		cbi(PORTB, 2);
+		cbi(PORTB, 0);
 		delay(10);
 		delayMicroseconds(250);
 #endif
