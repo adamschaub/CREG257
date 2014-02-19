@@ -1754,7 +1754,7 @@ Basic schematic elements and footprints for 0603, 1206, and PTH resistors.</desc
 </device>
 </devices>
 </deviceset>
-<deviceset name="JUMPER-3" prefix="JP">
+<deviceset name="JUMPER-3-OLD" prefix="JP">
 <gates>
 <gate name="G$1" symbol="JUMPER-3" x="-2.54" y="0"/>
 </gates>
@@ -2568,9 +2568,9 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <part name="BAT+" library="SparkFun-Connectors" deviceset="M01" device="PTH"/>
 <part name="MI+" library="SparkFun-Connectors" deviceset="M01" device="PTH"/>
 <part name="BAT-" library="SparkFun-Connectors" deviceset="M01" device="PTH"/>
-<part name="JP1" library="SparkFun-Passives" deviceset="JUMPER-3" device="PTH"/>
 <part name="MI-" library="SparkFun-Connectors" deviceset="M01" device="PTH"/>
 <part name="GND13" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
+<part name="JP2" library="SparkFun-Passives" deviceset="JUMPER-3-OLD" device="PTH"/>
 </parts>
 <sheets>
 <sheet>
@@ -2580,7 +2580,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <instance part="U1" gate="G$1" x="5.08" y="96.52"/>
 <instance part="PROGRAMMER_HEADER" gate="A" x="68.58" y="101.6"/>
 <instance part="RN42" gate="G$1" x="-60.96" y="91.44"/>
-<instance part="3V3REGULATOR" gate="G$1" x="-53.34" y="53.34"/>
+<instance part="3V3REGULATOR" gate="G$1" x="-55.88" y="55.88" rot="R90"/>
 <instance part="R1" gate="G$1" x="-96.52" y="91.44" rot="R90"/>
 <instance part="R2" gate="G$1" x="-88.9" y="91.44" rot="R90"/>
 <instance part="R4" gate="G$1" x="40.64" y="66.04"/>
@@ -2608,9 +2608,9 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <instance part="BAT+" gate="G$1" x="-73.66" y="53.34"/>
 <instance part="MI+" gate="G$1" x="55.88" y="88.9" rot="R180"/>
 <instance part="BAT-" gate="G$1" x="-91.44" y="43.18"/>
-<instance part="JP1" gate="G$1" x="5.08" y="27.94"/>
 <instance part="MI-" gate="G$1" x="38.1" y="15.24" rot="R180"/>
 <instance part="GND13" gate="1" x="30.48" y="10.16"/>
+<instance part="JP2" gate="G$1" x="-7.62" y="30.48"/>
 </instances>
 <busses>
 </busses>
@@ -2623,11 +2623,6 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="-17.78" y1="66.04" x2="-17.78" y2="58.42" width="0.1524" layer="91"/>
 <junction x="-17.78" y="66.04"/>
 <pinref part="GND1" gate="1" pin="GND"/>
-</segment>
-<segment>
-<pinref part="3V3REGULATOR" gate="G$1" pin="GND"/>
-<pinref part="GND2" gate="1" pin="GND"/>
-<wire x1="-53.34" y1="43.18" x2="-53.34" y2="45.72" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="GND3" gate="1" pin="GND"/>
@@ -2695,12 +2690,15 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <pinref part="GND13" gate="1" pin="GND"/>
 <wire x1="30.48" y1="15.24" x2="30.48" y2="12.7" width="0.1524" layer="91"/>
 </segment>
+<segment>
+<pinref part="GND2" gate="1" pin="GND"/>
+<wire x1="-53.34" y1="43.18" x2="-43.18" y2="53.34" width="0.1524" layer="91"/>
+<wire x1="-43.18" y1="53.34" x2="-43.18" y2="63.5" width="0.1524" layer="91"/>
+<pinref part="3V3REGULATOR" gate="G$1" pin="OUT"/>
+<wire x1="-43.18" y1="63.5" x2="-55.88" y2="63.5" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="UC_VCC" class="0">
-<segment>
-<label x="7.62" y="15.24" size="1.778" layer="95" rot="R90"/>
-<wire x1="7.62" y1="25.4" x2="7.62" y2="15.24" width="0.1524" layer="91"/>
-</segment>
 <segment>
 <pinref part="U1" gate="G$1" pin="AVCC"/>
 <wire x1="-17.78" y1="116.84" x2="-20.32" y2="116.84" width="0.1524" layer="91"/>
@@ -2726,6 +2724,11 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="81.28" y1="68.58" x2="81.28" y2="73.66" width="0.1524" layer="91"/>
 <label x="81.28" y="68.58" size="1.778" layer="95" rot="R90"/>
 </segment>
+<segment>
+<pinref part="JP2" gate="G$1" pin="2"/>
+<wire x1="-5.08" y1="27.94" x2="-5.08" y2="20.32" width="0.1524" layer="91"/>
+<label x="-5.08" y="17.78" size="1.778" layer="95" rot="R90"/>
+</segment>
 </net>
 <net name="5V" class="0">
 <segment>
@@ -2733,17 +2736,12 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="78.74" y1="106.68" x2="81.28" y2="106.68" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="JP1" gate="G$1" pin="1"/>
-<wire x1="5.08" y1="25.4" x2="5.08" y2="15.24" width="0.1524" layer="91"/>
-<label x="5.08" y="15.24" size="1.778" layer="95" rot="R90"/>
+<pinref part="JP2" gate="G$1" pin="3"/>
+<wire x1="-2.54" y1="27.94" x2="-2.54" y2="20.32" width="0.1524" layer="91"/>
+<label x="-2.54" y="22.86" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 <net name="3V3" class="0">
-<segment>
-<pinref part="3V3REGULATOR" gate="G$1" pin="OUT"/>
-<wire x1="-45.72" y1="53.34" x2="-40.64" y2="53.34" width="0.1524" layer="91"/>
-<label x="-43.18" y="53.34" size="1.778" layer="95"/>
-</segment>
 <segment>
 <pinref part="RN42" gate="G$1" pin="VDD"/>
 <label x="-86.36" y="101.6" size="1.778" layer="95"/>
@@ -2755,21 +2753,28 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <label x="-60.96" y="27.94" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="JP1" gate="G$1" pin="3"/>
-<wire x1="10.16" y1="25.4" x2="10.16" y2="15.24" width="0.1524" layer="91"/>
-<label x="10.16" y="15.24" size="1.778" layer="95" rot="R90"/>
+<pinref part="JP2" gate="G$1" pin="1"/>
+<wire x1="-7.62" y1="27.94" x2="-7.62" y2="20.32" width="0.1524" layer="91"/>
+<label x="-7.62" y="22.86" size="1.778" layer="95" rot="R90"/>
+</segment>
+<segment>
+<pinref part="3V3REGULATOR" gate="G$1" pin="IN"/>
+<wire x1="-55.88" y1="45.72" x2="-55.88" y2="48.26" width="0.1524" layer="91"/>
+<label x="-55.88" y="45.72" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 <net name="BAT_IN" class="0">
 <segment>
-<pinref part="3V3REGULATOR" gate="G$1" pin="IN"/>
-<wire x1="-60.96" y1="53.34" x2="-66.04" y2="53.34" width="0.1524" layer="91"/>
 <pinref part="C3" gate="G$1" pin="1"/>
 <wire x1="-66.04" y1="50.8" x2="-66.04" y2="53.34" width="0.1524" layer="91"/>
 <label x="-66.04" y="71.12" size="1.778" layer="95"/>
 <label x="-68.58" y="53.34" size="1.778" layer="95"/>
 <pinref part="BAT+" gate="G$1" pin="1"/>
+<wire x1="-66.04" y1="53.34" x2="-66.04" y2="66.04" width="0.1524" layer="91"/>
 <junction x="-66.04" y="53.34"/>
+<wire x1="-66.04" y1="66.04" x2="-48.26" y2="66.04" width="0.1524" layer="91"/>
+<pinref part="3V3REGULATOR" gate="G$1" pin="GND"/>
+<wire x1="-48.26" y1="66.04" x2="-48.26" y2="55.88" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="MISO" class="0">
