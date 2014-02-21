@@ -1188,7 +1188,6 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <pad name="OUT" x="2.54" y="-3.81" drill="1.016" shape="long" rot="R90"/>
 <text x="-3.81" y="5.08" size="1.778" layer="25" ratio="10">&gt;NAME</text>
 <text x="-3.937" y="2.54" size="1.778" layer="27" ratio="10">&gt;VALUE</text>
-<text x="-4.445" y="7.874" size="0.9906" layer="21" ratio="10">A15,2mm</text>
 <text x="-0.508" y="0" size="1.27" layer="51" ratio="10">-</text>
 <text x="-3.048" y="0" size="1.27" layer="51" ratio="10">I</text>
 <text x="2.032" y="0" size="1.27" layer="51" ratio="10">O</text>
@@ -2693,7 +2692,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <instance part="MI-" gate="G$1" x="38.1" y="15.24" rot="R180"/>
 <instance part="GND13" gate="1" x="30.48" y="10.16"/>
 <instance part="JP2" gate="G$1" x="-7.62" y="30.48"/>
-<instance part="IC1" gate="G$1" x="-55.88" y="63.5"/>
+<instance part="IC1" gate="G$1" x="-55.88" y="66.04"/>
 </instances>
 <busses>
 </busses>
@@ -2778,7 +2777,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="-53.34" y1="43.18" x2="-43.18" y2="53.34" width="0.1524" layer="91"/>
 <wire x1="-43.18" y1="53.34" x2="-43.18" y2="63.5" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="G$1" pin="GND"/>
-<wire x1="-55.88" y1="55.88" x2="-45.72" y2="55.88" width="0.1524" layer="91"/>
+<wire x1="-55.88" y1="58.42" x2="-45.72" y2="55.88" width="0.1524" layer="91"/>
 <wire x1="-45.72" y1="55.88" x2="-45.72" y2="63.5" width="0.1524" layer="91"/>
 <wire x1="-45.72" y1="63.5" x2="-43.18" y2="63.5" width="0.1524" layer="91"/>
 </segment>
@@ -2845,7 +2844,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <segment>
 <label x="-55.88" y="45.72" size="1.778" layer="95" rot="R90"/>
 <pinref part="IC1" gate="G$1" pin="OUT"/>
-<wire x1="-48.26" y1="63.5" x2="-48.26" y2="53.34" width="0.1524" layer="91"/>
+<wire x1="-48.26" y1="66.04" x2="-48.26" y2="53.34" width="0.1524" layer="91"/>
 <wire x1="-48.26" y1="53.34" x2="-55.88" y2="53.34" width="0.1524" layer="91"/>
 <wire x1="-55.88" y1="53.34" x2="-55.88" y2="45.72" width="0.1524" layer="91"/>
 </segment>
@@ -2860,7 +2859,6 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="-66.04" y1="53.34" x2="-66.04" y2="66.04" width="0.1524" layer="91"/>
 <junction x="-66.04" y="53.34"/>
 <pinref part="IC1" gate="G$1" pin="IN"/>
-<wire x1="-63.5" y1="63.5" x2="-63.5" y2="66.04" width="0.1524" layer="91"/>
 <wire x1="-63.5" y1="66.04" x2="-66.04" y2="66.04" width="0.1524" layer="91"/>
 </segment>
 </net>
