@@ -1,4 +1,4 @@
-devForeman=foreman start -e .env
+devForeman=foreman start
 
 dev:
 	$(devForeman)

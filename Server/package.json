@@ -8,7 +8,11 @@
     "net": "*",
     "http": "*",
     "mongoose": "*",
-    "bcrypt": "*"
+    "bcrypt": "*",
+    "passport": "*",
+    "passport-local": "*",
+    "connect-flash": "*",
+    "nodemailer": "*"
   },
   "scripts": {
     "start": "node app.js"

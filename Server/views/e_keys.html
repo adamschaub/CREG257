@@ -1,0 +1,146 @@
+<div class="container">
+    {{#if device}}
+        <div class="row">
+            <div class="span12">
+                <h1>
+                    Manage eKeys
+                </h1>
+                <hr>
+                <p>
+                    You can manage your eKeys on this page!
+                </p>
+            </div>
+            {{#if eKeys}}
+                {{#each eKeys}}
+                    <p>{{time.start}} to {{time.end}}</p>
+                    <p>Interval: {{time.interval}}</p>
+                {{/each}}
+            {{else}}
+                <p>You have no eKeys!</p>
+            {{/if}}
+
+            <form class="form-horizontal" role="form" method="post" action="/add_key">
+                <fieldset>
+                    <legend>New eKey</legend>
+                </fieldset>
+                <h4>Choose the Time</h4>
+                <div class="form-group">
+                    <p></p>
+                    <label class="control-label col-lg-1">Start</label>
+                    <div class="col-lg-3">
+                        <div class="bfh-datepicker" data-name="startDate" data-min="today">
+                        </div>
+                    </div>
+                    <span class="help-block">Select the day the eKey will begin to be active.</span>
+                </div> 
+                <div class="form-group">
+                    <p></p>
+                    <label class="control-label col-lg-1">Month</label>
+                    <div class="col-lg-3">
+                        <div class="bfh-datepicker" data-min="today" data-name="endDate"></div>
+                    </div>
+                    <span class="help-block">Select the day the eKey will be disabled.</span>
+                </div> 
+                <div class="form-group">
+                    <label class="control-label col-lg-1">Times</label>
+                    <div class="col-lg-3">
+                        <input type="number" min="0" class="form-control" name="repeatNumber" id="repeatNumber" placeholder="0" value="0">
+                    </div>
+                    <span class="help-block">Enter the number of times and the time intervals that this eKey will repeat</span>
+                </div>     
+                <div class="form-group">
+                    <label class="control-label col-lg-1">Repeat</label>
+                    <div class="col-lg-3">
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="repeatRadio" id="repeatRadio1" value="none" checked="true">
+                                None
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="repeatRadio" id="repeatRadio2" value="daily">
+                                Daily
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="repeatRadio" id="repeatRadio3" value="weekly">
+                                Weekly
+                            </label>
+                        </div>
+                    </div>
+                </div> 
+                <h4>Select Contacts</h4>  
+                <div class="form-group">
+                    <input type="text" class="form-control" id="phone1" placeholder="123">
+                </div>
+                <div class="form-group col-lg-1 col-lg-offset-1">
+                    <button type="submit" class="btn btn-primary btn-block">Submit</button>
+                </div>       
+            </form>
+        </div>
+        <div class="row">
+            
+        </div>
+    {{else}}
+        {{#if loggedIn}}
+            <div class="col-lg-4 col-lg-offset-4">
+                <div class="well">
+                    <form role="form" method="post" action="/e_keys">
+                        <fieldset>
+                            <legend>Register Lock</legend>
+                        </fieldset>
+                        <div class="form-group {{#if error}}has-error{{/if}}">
+                            <label class="control-label">Device ID</label>
+                            <input type="text" class="form-control" placeholder="Device" name="device" />
+                        </div>
+                        <div class="form-group {{#if error}}has-error{{/if}}">
+                            <label class="control-label">Password</label>
+                            <input type="password" class="form-control" placeholder="Password" name="password"/>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-block">Log In</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                {{#if error}}
+                <div class="alert alert-dismissable alert-danger" style="margin-top:10px">
+                    <button type="button" class="close" data-dismiss="alert">x</button>
+                    <strong>Log In Error!</strong>
+                    That username/password is not recognized.
+                </div>
+                {{/if}}
+            </div>
+        {{else}}
+            <div class="col-md-6 col-md-offset-3">
+                <div class="panel panel-danger">
+                    <div class="panel-heading">
+                        <h3>Please Login</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p>You must be logged in to manage eKeys! <a href="/login">Log in here.</a></p>
+                    </div>
+                </div>
+            </div>
+        {{/if}}
+    {{/if}}
+</div>
+<script type="text/javascript">
+    var daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+    function setDays(ele, qString) {
+        var query = '#' + qString;
+        $(query + ' option').each(function(){
+            $(this).remove();
+        });
+
+        var daySelector = $(query);
+
+        for(var i = 0; i < daysInMonths[ele.value-1]; ++i) {
+            daySelector.append('<option value="' + (i+1) + '">' + (i+1) + '</option>');
+        }
+     }
+</script>
