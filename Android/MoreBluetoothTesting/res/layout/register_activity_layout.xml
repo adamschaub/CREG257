@@ -93,6 +93,7 @@
         android:layout_alignParentRight="true"
         android:layout_below="@+id/password2"
         android:singleLine="true"
+        android:background="@drawable/bbutton_primary"
         android:text="Create Account" />
 
 </RelativeLayout>

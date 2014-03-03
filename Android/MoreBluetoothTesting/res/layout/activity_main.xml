@@ -16,9 +16,9 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:ems="10"
+        android:hint="Username"
         android:imeOptions="actionNext"
-        android:singleLine="true"
-        android:hint="Username" >
+        android:singleLine="true" >
 
         <requestFocus />
     </EditText>
@@ -41,6 +41,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_below="@+id/passwordField"
+        android:background="@drawable/bbutton_primary"
         android:text="Login" />
 
     <TextView
