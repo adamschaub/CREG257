@@ -8,45 +8,58 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
 
+    <EditText
+        android:id="@+id/usernameField"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:ems="10"
+        android:imeOptions="actionNext"
+        android:singleLine="true"
+        android:hint="Username" >
+
+        <requestFocus />
+    </EditText>
+
+    <EditText
+        android:id="@+id/passwordField"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/usernameField"
+        android:ems="10"
+        android:hint="Password"
+        android:inputType="textPassword" />
+
     <Button
-        android:id="@+id/initButtonId"
+        android:id="@+id/loginButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/passwordField"
+        android:text="Login" />
+
+    <TextView
+        android:id="@+id/invalidLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/loginButton"
+        android:layout_centerHorizontal="true"
+        android:text="Invalid Username/Password"
+        android:textColor="#f00"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/registerLink"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:text="Initialize" />
-
-    <Button
-        android:id="@+id/shareKeyButtonId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/initButtonId"
-        android:layout_alignBottom="@+id/initButtonId"
-        android:text="Share Key" />
-
-    <Button
-        android:id="@+id/delButtonId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:layout_marginTop="68dp"
-        android:text="Reset" />
-
-    <Button
-        android:id="@+id/lockButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/delButtonId"
-        android:layout_alignLeft="@+id/shareKeyButtonId"
-        android:text="Lock" />
-
-    <Button
-        android:id="@+id/unlockButton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/delButtonId"
-        android:layout_toRightOf="@+id/shareKeyButtonId"
-        android:text="Unlock" />
+        android:text="@string/register_link"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
 </RelativeLayout>

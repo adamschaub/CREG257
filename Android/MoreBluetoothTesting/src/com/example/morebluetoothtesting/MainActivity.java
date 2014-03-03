@@ -2,6 +2,8 @@ package com.example.morebluetoothtesting;
 
 import java.io.File;
 
+import org.json.JSONObject;
+
 import android.os.Bundle;
 import android.os.IBinder;
 import android.app.Activity;
@@ -12,7 +14,9 @@ import android.content.ServiceConnection;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
@@ -45,13 +49,51 @@ public class MainActivity extends Activity {
 		//bindService(mainIntent, con, Context.BIND_AUTO_CREATE);
 		startService(mainIntent);
 		
-		Button initButton = (Button) findViewById(R.id.initButtonId);
+		findViewById(R.id.registerLink).setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				startActivity(new Intent (thisActivity, RegisterActivity.class));
+			}
+		});
+
+		final Button loginButton = (Button)findViewById(R.id.loginButton);
+		loginButton.setOnClickListener(new View.OnClickListener () {
+			public void onClick(View v) {
+				try {
+					String res = new WebRequest().execute("http://phone-key-website.herokuapp.com/mobile-login",
+							"username", ((TextView)findViewById(R.id.usernameField)).getText().toString(),
+							"password", ((TextView)findViewById(R.id.passwordField)).getText().toString()).get();
+					JSONObject jsonRes = new JSONObject(res);
+					if (jsonRes.has("loggedIn"))
+						Log.v("Res loggedIn", jsonRes.getBoolean("loggedIn") + "");
+					if (jsonRes.has("message"))
+						Log.v("Res message", jsonRes.getString("message"));
+					if (jsonRes.has("username"))
+						Log.v("Res username", jsonRes.getString("username"));
+					if (jsonRes.has("id"))
+						Log.v("Res id", jsonRes.getString("id"));
+
+					/* Make sure the keyboard goes away after displaying results */
+					InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+					imm.hideSoftInputFromWindow(loginButton.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
+
+					if (jsonRes.has("loggedIn") && jsonRes.getBoolean("loggedIn"))
+						Log.v("dsa", "Logged in");
+					else {
+						((TextView)findViewById(R.id.usernameField)).setText("");
+						((TextView)findViewById(R.id.passwordField)).setText("");
+						findViewById(R.id.invalidLabel).setVisibility(View.VISIBLE);
+					}
+				} catch (Exception e) { Log.e("Exception!", e.toString()); }
+			}
+		});
+
+		/*Button initButton = (Button) findViewById(R.id.initButtonId);
 		initButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				BluetoothConnection btConnection = BluetoothConnection.getInstance();
 
-				/* Stop the service, otherwise it'll see the BT connect and try starting the auth sequence */
+				/* Stop the service, otherwise it'll see the BT connect and try starting the auth sequence *
 				stopService(mainIntent);
 
 				btConnection.connect();
@@ -60,13 +102,24 @@ public class MainActivity extends Activity {
 
 				startService(mainIntent);
 			}
-		});
+		});*
 
 		Button lockButton = (Button) findViewById(R.id.lockButton);
 		lockButton.setOnClickListener(new View.OnClickListener () {
 			public void onClick(View v) {
 				try {
-					String res = new WebRequest().execute("lock request").get();
+					//String res = new WebRequest().execute("lock request").get();
+					String res = new WebRequest().
+							execute("http://phone-key-website.herokuapp.com/mobile-login", "username", "mam21", "password", "asd").get();
+					JSONObject jsonRes = new JSONObject(res);
+					if (jsonRes.has("loggedIn"))
+						Log.v("Res loggedIn", jsonRes.getBoolean("loggedIn") + "");
+					if (jsonRes.has("message"))
+						Log.v("Res message", jsonRes.getString("message"));
+					if (jsonRes.has("username"))
+						Log.v("Res username", jsonRes.getString("username"));
+					if (jsonRes.has("id"))
+						Log.v("Res id", jsonRes.getString("id"));
 				} catch (Exception e) { Log.e("Exception!", e.toString()); }
 			}
 		});
@@ -76,15 +129,6 @@ public class MainActivity extends Activity {
 			public void onClick(View v) {
 				try {
 					String res = new WebRequest().execute("unlock request").get();
-				} catch (Exception e) { Log.e("Exception!", e.toString()); }
-			}
-		});
-
-		Button shareButton = (Button) findViewById(R.id.shareKeyButtonId);
-		shareButton.setOnClickListener(new View.OnClickListener () {
-			public void onClick(View v) {
-				try {
-					String res = new WebRequest().execute("share request").get();
 				} catch (Exception e) { Log.e("Exception!", e.toString()); }
 			}
 		});
@@ -99,7 +143,7 @@ public class MainActivity extends Activity {
 					f.delete();
 				}
 			}
-		});
+		});*/
 	}
 	
 	@Override
