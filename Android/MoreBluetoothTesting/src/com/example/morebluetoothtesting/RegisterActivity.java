@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +14,8 @@ import android.widget.Button;
 import android.widget.TextView;
 
 public class RegisterActivity extends Activity {
+
+	private Activity thisActivity = this;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -46,6 +49,8 @@ public class RegisterActivity extends Activity {
 					/* Make sure the keyboard goes away after displaying results */
 					InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 					imm.hideSoftInputFromWindow(registerButton.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
+
+					startActivity(new Intent (thisActivity, AccountPage.class));
 				} catch (Exception e) { Log.e("Exception!", e.toString()); }
 			}
 		});

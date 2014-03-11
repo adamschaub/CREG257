@@ -1,12 +1,10 @@
 package com.example.morebluetoothtesting;
 
-import java.io.File;
 import org.apache.http.client.CookieStore;
 import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.app.Activity;
@@ -87,13 +85,15 @@ public class MainActivity extends Activity {
 					InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 					imm.hideSoftInputFromWindow(loginButton.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
 
+					Log.v("ds", res);
 					if (jsonRes.has("loggedIn") && jsonRes.getBoolean("loggedIn")) {
 						Log.v("dsa", "Logged in");
 						if (jsonRes.has("update") && jsonRes.getBoolean("update")) {	// need to issue update with MAC addr
 							String updateRes = new WebRequest(sessionCookie).execute("http://phone-key-website.herokuapp.com/update/" + jsonRes.getString("username"),
 									"MAC", BluetoothAdapter.getDefaultAdapter().getAddress()).get();
-							Log.v("asd", updateRes);
+							Log.v("sd", updateRes);
 						}
+						startActivity(new Intent (thisActivity, AccountPage.class));
 					}
 					else {
 						((TextView)findViewById(R.id.usernameField)).setText("");
