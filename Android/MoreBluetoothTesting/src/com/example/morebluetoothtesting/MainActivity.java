@@ -1,12 +1,16 @@
 package com.example.morebluetoothtesting;
 
 import java.io.File;
+import org.apache.http.client.CookieStore;
+import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -59,9 +63,16 @@ public class MainActivity extends Activity {
 		loginButton.setOnClickListener(new View.OnClickListener () {
 			public void onClick(View v) {
 				try {
-					String res = new WebRequest().execute("http://phone-key-website.herokuapp.com/mobile-login",
+					WebRequest loginReq = new WebRequest();
+					CookieStore sessionCookie;
+
+					/* Todo: progress bar like thing */
+					String res = loginReq.execute("http://phone-key-website.herokuapp.com/mobile-login",
 							"username", ((TextView)findViewById(R.id.usernameField)).getText().toString(),
-							"password", ((TextView)findViewById(R.id.passwordField)).getText().toString()).get();
+							"password", ((TextView)findViewById(R.id.passwordField)).getText().toString()).get(10000, TimeUnit.MILLISECONDS);
+
+					sessionCookie = loginReq.getCookieStore();
+
 					JSONObject jsonRes = new JSONObject(res);
 					if (jsonRes.has("loggedIn"))
 						Log.v("Res loggedIn", jsonRes.getBoolean("loggedIn") + "");
@@ -76,14 +87,20 @@ public class MainActivity extends Activity {
 					InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 					imm.hideSoftInputFromWindow(loginButton.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
 
-					if (jsonRes.has("loggedIn") && jsonRes.getBoolean("loggedIn"))
+					if (jsonRes.has("loggedIn") && jsonRes.getBoolean("loggedIn")) {
 						Log.v("dsa", "Logged in");
+						if (jsonRes.has("update") && jsonRes.getBoolean("update")) {	// need to issue update with MAC addr
+							String updateRes = new WebRequest(sessionCookie).execute("http://phone-key-website.herokuapp.com/update/" + jsonRes.getString("username"),
+									"MAC", BluetoothAdapter.getDefaultAdapter().getAddress()).get();
+							Log.v("asd", updateRes);
+						}
+					}
 					else {
 						((TextView)findViewById(R.id.usernameField)).setText("");
 						((TextView)findViewById(R.id.passwordField)).setText("");
 						findViewById(R.id.invalidLabel).setVisibility(View.VISIBLE);
 					}
-				} catch (Exception e) { Log.e("Exception!", e.toString()); }
+				} catch (Exception e) { e.printStackTrace(); }
 			}
 		});
 
