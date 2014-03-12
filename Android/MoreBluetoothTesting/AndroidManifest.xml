@@ -64,6 +64,7 @@
         <service android:name="com.example.morebluetoothtesting.MainService" >
         </service>
         <activity android:name="RegisterActivity"></activity>
+        <activity android:name="AccountPage"></activity>
     </application>
 
 </manifest>

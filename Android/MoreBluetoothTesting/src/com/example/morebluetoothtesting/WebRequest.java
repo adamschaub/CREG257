@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import org.apache.http.client.CookieStore;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -20,6 +21,14 @@ import android.util.Log;
 
 class WebRequest extends AsyncTask<String, Void, String> {
 
+	private CookieStore sessionCookie = null;
+
+	public WebRequest() {}
+
+	public WebRequest(CookieStore sessionCookie) {
+		this.sessionCookie = sessionCookie;
+	}
+
     protected String doInBackground(String... request) {
         DefaultHttpClient httpClient = new DefaultHttpClient(new BasicHttpParams());
         HttpPost httpPost = null;
@@ -31,12 +40,17 @@ class WebRequest extends AsyncTask<String, Void, String> {
 
             JSONObject postData = new JSONObject();
             for (int i=1; i<request.length; i+=2)
-                postData.put(request[i], request[i+1]);
+				postData.put(request[i], request[i+1]);
 
             StringEntity postString = new StringEntity(postData.toString());
             postString.setContentType(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
 
             httpPost.setEntity(postString);
+
+            if (sessionCookie == null)
+				sessionCookie = httpClient.getCookieStore();
+			else
+				httpClient.setCookieStore(sessionCookie);
 
             HttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
@@ -58,6 +72,10 @@ class WebRequest extends AsyncTask<String, Void, String> {
         } catch (Exception e) { Log.e("Exception!", e.toString()); }
 
         return result;
+    }
+
+	public CookieStore getCookieStore() {
+		return sessionCookie;
     }
 
     protected void onPostExecute(String result) { }
