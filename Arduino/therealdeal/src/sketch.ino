@@ -8,8 +8,12 @@
 
 #define KEY_SIZE (256/8)	// int is (I believe) 8 bits, so use byte size instead of bit size
 
-#define LOCKED_PIN 		5	// PD5
-#define UNLOCKED_PIN	6	// PD6
+#define LOCKED_PIN 		12	// PB4
+#define UNLOCKED_PIN	9	// PB1
+
+#define	LOCK_INIT		0
+#define LOCK_LOCKED		1
+#define LOCK_UNLOCKED	2
 
 #define	EN12			6	// Enable H-bridge outputs 1 and 2
 #define A1				7	// H-bridge control 1A
@@ -28,6 +32,9 @@
 #define UNCONNECTED	0
 #define CONNECTING	1
 #define CONNECTED	2
+
+#define WIFLY_RX	0
+#define WIFLY_TX	1
 
 #define CMD_LOCK	0
 #define CMD_UNLOCK	1
@@ -51,27 +58,32 @@ typedef struct acl_entry {
 	uint8_t mac_addr[MAC_ADDR_SIZE];
 } acl_entry_t;
 
-acl_entry_t acl[3];
+acl_entry_t acl[1];
 uint8_t acl_num_entries;
 uint8_t acl_current;
 
-HardwareSerial dbSerial = Serial;
-uint8_t db_buf[BT_CMDBUF_LEN];
-uint8_t db_buf_pos = 0;
+//HardwareSerial dbSerial = Serial;
+//uint8_t db_buf[BT_CMDBUF_LEN];
+//uint8_t db_buf_pos = 0;
 
 SoftwareSerial btSerial(BT_RX, BT_TX);
 uint8_t bt_buf[BT_CMDBUF_LEN];
 uint8_t bt_buf_pos = 0;
 uint8_t bt_state = UNCONNECTED;
 
+//SoftwareSerial wiflySerial(WIFLY_RX, WIFLY_TX);
+HardwareSerial wiflySerial = Serial;
+uint8_t wifly_buf[BT_CMDBUF_LEN];
+uint8_t wifly_buf_pos = 0;
+
+uint8_t lock_state = LOCK_INIT;
+
 AES aes;
 
 void setup()
 {
-    pinMode(12, OUTPUT);
-    digitalWrite(12, HIGH);
-
-	dbSerial.begin(115200);
+	//dbSerial.begin(115200);
+	wiflySerial.begin(9600);
 	btSerial.begin(9600);   // SoftwareSerial was having trouble at 115200
 
 //	ADCSRA &= ~ bit(ADEN); bitSet(PRR, PRADC);   // Disable the ADC to save power
@@ -113,6 +125,7 @@ void loop()
 		delay(100);
 //		LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
 	}
+
 	/* Wait for the connection status message from the BT module.
 	 * This will be unencrypted, because it's coming directly from the module */
 	if (readBTSerial()) {
@@ -138,6 +151,28 @@ void loop()
 			bt_state = UNCONNECTED;
 		}
 	}
+
+	if (readWiflySerial()) {
+		if (checkData(wifly_buf, (uint8_t *) "unlock", 6)) {
+			unlock();
+			wiflySerial.write("ACK");
+		}
+		else if (checkData(wifly_buf, (uint8_t *) "lock", 4)) {
+			lock();
+			wiflySerial.write("ACK");
+		}
+		if (checkData(wifly_buf, (uint8_t *) "status", 6)) {
+			if (lock_state == LOCK_LOCKED)
+				wiflySerial.write("locked");
+			else if (lock_state == LOCK_UNLOCKED)
+				wiflySerial.write("unlocked");
+			else if (lock_state == LOCK_INIT)
+				wiflySerial.write("init");
+			else
+				wiflySerial.write("unknown");
+		}
+	}
+
 	delay(2000);
 }
 
@@ -200,6 +235,8 @@ void initLock(void)
 	} else {
 		readACL();
 	}
+
+	lock_state = LOCK_LOCKED;
 
 	digitalWrite(UNLOCKED_PIN, LOW);
 }
@@ -264,6 +301,8 @@ void unlock(void)
 	digitalWrite(UNLOCKED_PIN, HIGH);	// set LEDs accordingly
 	digitalWrite(LOCKED_PIN, LOW);
 
+	lock_state = LOCK_UNLOCKED;
+
 /*	digitalWrite(A1, LOW);	// spin motor one way...
 	digitalWrite(A2, HIGH);
 	delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
@@ -286,6 +325,8 @@ void lock(void)
 	digitalWrite(UNLOCKED_PIN, LOW);	// set LEDs accordingly
 	digitalWrite(LOCKED_PIN, HIGH);
 
+	lock_state = LOCK_LOCKED;
+
 /*	digitalWrite(A1, HIGH);	// spin motor one way...
 	digitalWrite(A2, LOW);
 	delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
@@ -302,12 +343,12 @@ void lock(void)
 }
 
 /* Read output from the BT module.  Returns 1 if we reach
- * and end of line character. */
+ * an end of line character. */
 int readBTSerial()
 {
 	while(btSerial.available()) {
 		bt_buf[bt_buf_pos] = (char)btSerial.read();
-		dbSerial.write(bt_buf[bt_buf_pos]);
+		//dbSerial.write(bt_buf[bt_buf_pos]);
 
 		if(bt_buf[bt_buf_pos] == '\r' || bt_buf[bt_buf_pos] == '\n') {
 			bt_buf_pos = 0;
@@ -321,6 +362,26 @@ int readBTSerial()
 	return 0;
 }
 
+/* Read output from the Wifly module.  Returns 1 if we reach
+ * an end of line character. */
+int readWiflySerial()
+{
+	while(wiflySerial.available()) {
+		wifly_buf[wifly_buf_pos] = (char)wiflySerial.read();
+		//dbSerial.write(wifly_buf[wifly_buf_pos]);
+
+		if(wifly_buf[wifly_buf_pos] == '\r' || wifly_buf[wifly_buf_pos] == '\n') {
+			wifly_buf_pos = 0;
+			return 1;
+		}
+		else if(wifly_buf_pos >= BT_CMDBUF_LEN-2)
+			wifly_buf_pos = 0;
+		else
+			wifly_buf_pos++;
+	}
+	return 0;
+}
+
 /* Read 16 bytes from BT module, and then decrypt the buffer. */
 int readBTSerialEnc()
 {
@@ -330,7 +391,7 @@ int readBTSerialEnc()
 	bt_buf_pos = 0;
 	while(btSerial.available()) {
 		bt_buf[bt_buf_pos] = btSerial.read();
-		dbSerial.write(bt_buf[bt_buf_pos]);
+		//dbSerial.write(bt_buf[bt_buf_pos]);
 
 		bt_buf_pos++;
 
@@ -383,7 +444,7 @@ void transmitByte(uint8_t data)
 		else
 			cbi(PORTB, 0);
 		delay(10);
-		delayMicroseconds(250);
+		delayMicroseconds(230);
 #endif
 		data >>= 1;
 	}
@@ -400,10 +461,10 @@ void preamble(void)
 #else
 		sbi(PORTB, 0);
 		delay(10);
-		delayMicroseconds(250);
+		delayMicroseconds(230);
 		cbi(PORTB, 0);
 		delay(10);
-		delayMicroseconds(250);
+		delayMicroseconds(230);
 #endif
 	}
 }
