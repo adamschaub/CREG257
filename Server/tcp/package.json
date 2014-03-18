@@ -1,0 +1,33 @@
+{
+  "name": "PhoneKeyTcpServer",
+  "version": "0.0.0",
+  "description": "Server application for Phone-Key electronic door lock.",
+  "dependencies": {
+    "express": "*",
+    "hbs": "*",
+    "net": "*",
+    "http": "*",
+    "mongoose": "*",
+    "bcrypt": "*",
+    "nodemailer": "*",
+    "cron": "*",
+    "async": "*"
+  },
+  "scripts": {
+    "start": "node app.js"
+  },
+  "main": "app.js",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:MaybeNot/CREG257.git"
+  },
+  "keywords": [
+    "phone-key"
+  ],
+  "author": "Adam Schaub",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/MaybeNot/CREG257/issues"
+  }
+}
