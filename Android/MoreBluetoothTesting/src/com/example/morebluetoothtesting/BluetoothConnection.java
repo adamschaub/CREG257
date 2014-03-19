@@ -21,7 +21,7 @@ public class BluetoothConnection {
 	private static BluetoothConnection instance = null;
 
 	public ConnectedThread mConnectedThread;
-    private ConnectThread mConnectThread;
+    //private ConnectThread mConnectThread;
     private AcceptThread mInsecureAcceptThread;
 	
 	private int mState;
@@ -107,7 +107,10 @@ public class BluetoothConnection {
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
-
+		if (mInsecureAcceptThread != null) {
+			mInsecureAcceptThread.cancel();
+			mInsecureAcceptThread = null;
+		}
         setState(STATE_NONE);
     }
 
@@ -344,7 +347,7 @@ public class BluetoothConnection {
      * This thread runs while attempting to make an outgoing connection
      * with a device. It runs straight through; the connection either
      * succeeds or fails.
-     */
+     *
     private class ConnectThread extends Thread {
 		private final BluetoothSocket mmSocket;
 		private final BluetoothDevice mmDevice;
@@ -406,7 +409,7 @@ public class BluetoothConnection {
 		}
     }
 
-    /* Assumes that device `deviceName` has already been paired. */
+    /* Assumes that device `deviceName` has already been paired. *
 	public void connect () {
 		if (mBluetoothAdapter == null) {
 			Log.e("Error!", "Bluetooth is disabled!");
@@ -444,7 +447,7 @@ public class BluetoothConnection {
 		setState(STATE_CONNECTING);
 		while(getState() != STATE_CONNECTED);
 		Log.v("Done", "DOOOONE");
-	}
+	}*/
 	
 	private BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private BluetoothDevice targetDevice = null;

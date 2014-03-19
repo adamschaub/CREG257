@@ -33,7 +33,7 @@
 #define CONNECTING	1
 #define CONNECTED	2
 
-#define WIFLY_RX	0
+#define WIFLY_RX	0	// WHITE ON TOP, GREEN ON BOTTOM
 #define WIFLY_TX	1
 
 #define CMD_LOCK	0
@@ -119,8 +119,8 @@ void loop()
 	if (bt_state == UNCONNECTED) {
 	//	bt_state = CONNECTING;
 		btSerial.write("C,");
-//		btSerial.write("78521A53544B");
-		btSerial.write((char *) acl[acl_current].mac_addr);
+		btSerial.write("78521A53544B");
+//		btSerial.write((char *) acl[acl_current].mac_addr);
 		btSerial.write("\r");
 		delay(100);
 //		LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
@@ -129,7 +129,6 @@ void loop()
 	/* Wait for the connection status message from the BT module.
 	 * This will be unencrypted, because it's coming directly from the module */
 	if (readBTSerial()) {
-
 		/* Connected to phone, so now listen for the command the phone wants us to execute */
 		if (checkData(bt_buf, (uint8_t *) "+CONNECT", 8)) {
 			bt_state = CONNECTED;
@@ -137,6 +136,15 @@ void loop()
 			aes.set_key((uint8_t *) "12345678123456781234567812345678", 32);
 			get_cmd();
 		}
+		/*else if (checkData(bt_buf, (uint8_t *) "ERR-connect", 11)) {
+			btSerial.write("K,");
+			delay(1000);
+			btSerial.write("$$$");
+			bt_state = UNCONNECTED;
+		}
+		else if (checkData(bt_buf, (uint8_t *) "KILL", 4)) {
+			bt_state = UNCONNECTED;
+		}*/
 		/* Connection failed, set state to unconnected and we'll try to connect again at the top of loop() */
 		else if (checkData(bt_buf, (uint8_t *) "CONNECT failed", 14)) {
 			bt_state = UNCONNECTED;
@@ -151,7 +159,7 @@ void loop()
 			bt_state = UNCONNECTED;
 		}
 	}
-
+#if 0
 	if (readWiflySerial()) {
 		if (checkData(wifly_buf, (uint8_t *) "unlock", 6)) {
 			unlock();
@@ -172,6 +180,7 @@ void loop()
 				wiflySerial.write("unknown");
 		}
 	}
+#endif
 
 	delay(2000);
 }
@@ -204,8 +213,9 @@ void do_mi_authentication(uint8_t on_auth_cmd)
 
 		/* Read BT to get response.  This WILL be encrypted,
 		 * because this message comes from the phone */
-		if (readBTSerialEnc()) {
-
+//		if (readBTSerialEnc()) {
+		if (readBTSerial()) {
+			digitalWrite(UNLOCKED_PIN, HIGH);
 			if (checkData(bt_buf, (uint8_t *) "ABCDEFGH", 8)) {	// Good response to MI
 				btSerial.write("ACKACKACK");
 
@@ -443,8 +453,8 @@ void transmitByte(uint8_t data)
 			sbi(PORTB, 0);
 		else
 			cbi(PORTB, 0);
-		delay(10);
-		delayMicroseconds(230);
+		delay(9);
+		delayMicroseconds(990);
 #endif
 		data >>= 1;
 	}
@@ -460,11 +470,11 @@ void preamble(void)
 		delayMicroseconds(PERIOD);
 #else
 		sbi(PORTB, 0);
-		delay(10);
-		delayMicroseconds(230);
+		delay(9);
+		delayMicroseconds(990);
 		cbi(PORTB, 0);
-		delay(10);
-		delayMicroseconds(230);
+		delay(9);
+		delayMicroseconds(990);
 #endif
 	}
 }

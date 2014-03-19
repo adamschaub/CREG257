@@ -1,4 +1,4 @@
-
+/* README: Start the app.  Unplug/plug in device.  Pray it works... */
 package com.example.morebluetoothtesting;
 
 import java.nio.ByteBuffer;
@@ -46,6 +46,10 @@ public class MainService extends Service {
 					key = keyAddrMap.get(connectedAddr).getBytes();
 				Log.v(CLASS_NAME, "Connected to BT " + keyAddrMap.get(connectedAddr) + " " + connectedAddr);
 				doAuthSeq();
+			} else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(intent.getAction())) {
+				Log.v("Disconnected", "DISCONNECTED!");
+				btConnection.stop();
+				btConnection.start();
 			}
 		}
 	};
@@ -107,14 +111,19 @@ public class MainService extends Service {
 
 			/* Reply to the door with the challenge we received, and wait for an ACK or NAK. */
 			try {
-				btConnection.write(encryptData(miData, new byte[16]));
+				//btConnection.write(encryptData(miData, new byte[16]));
+				btConnection.write(miData);
+				btConnection.write("\r".getBytes());
 			} catch (Exception e) { Log.e("Exception!", e.toString()); }
 			synchronized (btConnection.mConnectedThread) {
 				try {
-					btConnection.mConnectedThread.wait();
+					Log.v("before", "before wait");
+					btConnection.mConnectedThread.wait(1000);
+					Log.v("after", "after wait");
 				} catch (Exception e) { Log.e("Exception!", e.toString()); }
 			}
 			response = btConnection.getResponse();
+			Log.v("response", response+"");
 		}
 	}
 
@@ -146,8 +155,10 @@ public class MainService extends Service {
 		super.onCreate();
 		Log.v(CLASS_NAME, "Created");
 
-		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED);
-		registerReceiver(btReceiver, filter);
+		IntentFilter conFilter = new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED);
+		IntentFilter disFilter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+		registerReceiver(btReceiver, conFilter);
+		registerReceiver(btReceiver, disFilter);
 		btConnection = BluetoothConnection.getInstance();
 
 		magListener = new Magnetometer();
