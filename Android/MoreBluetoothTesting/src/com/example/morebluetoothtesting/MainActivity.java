@@ -1,6 +1,9 @@
 package com.example.morebluetoothtesting;
 
 import org.apache.http.client.CookieStore;
+import org.apache.http.cookie.Cookie;
+
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
@@ -85,15 +88,28 @@ public class MainActivity extends Activity {
 					InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 					imm.hideSoftInputFromWindow(loginButton.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
 
-					Log.v("ds", res);
 					if (jsonRes.has("loggedIn") && jsonRes.getBoolean("loggedIn")) {
 						Log.v("dsa", "Logged in");
 						if (jsonRes.has("update") && jsonRes.getBoolean("update")) {	// need to issue update with MAC addr
 							String updateRes = new WebRequest(sessionCookie).execute("http://phone-key-website.herokuapp.com/update/" + jsonRes.getString("username"),
 									"MAC", BluetoothAdapter.getDefaultAdapter().getAddress()).get();
-							Log.v("sd", updateRes);
 						}
-						startActivity(new Intent (thisActivity, AccountPage.class));
+						List<Cookie> cookieList = sessionCookie.getCookies();
+						String[] cookieNames = new String[cookieList.size()];
+						String[] cookieValues = new String[cookieList.size()];
+						String[] cookieDomains = new String[cookieList.size()];
+						int i=0;
+						for (Cookie c : cookieList) {
+							cookieNames[i] = c.getName();
+							cookieValues[i] = c.getValue();
+							cookieDomains[i] = c.getDomain();
+							i++;
+						}
+						Intent accountPageIntent = new Intent(thisActivity, AccountPage.class);
+						accountPageIntent.putExtra("cookieNames", cookieNames);
+						accountPageIntent.putExtra("cookieValues", cookieValues);
+						accountPageIntent.putExtra("cookieDomains", cookieDomains);
+						startActivity(accountPageIntent);
 					}
 					else {
 						((TextView)findViewById(R.id.usernameField)).setText("");
