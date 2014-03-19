@@ -11,6 +11,8 @@ var userSchema = new mongoose.Schema({
     phone: {
         MAC: String,
         number: String,
+        provider: String,
+        textCode: String,
         verified: Boolean
     },
     name: {
@@ -19,7 +21,9 @@ var userSchema = new mongoose.Schema({
     },
     password: {type: String, required: true},
     lastLogon: Date,
-    lockedUntil: Date
+    lockedUntil: Date,
+    update: Boolean,
+    contacts: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });
 
 //hash all passwords using bcrypt before saves
@@ -44,6 +48,7 @@ userSchema.methods.comparePassword = function(comp) {
     return bcrypt.compareSync(comp, this.password);
 };
 
+//Not implemented, for further account security
 userSchema.virtual('isLocked').get(function() {
     return !!(this.lockedUntil && this.lockedUntil > Date.now());
 });

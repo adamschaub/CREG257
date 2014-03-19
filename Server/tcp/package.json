@@ -1,5 +1,5 @@
 {
-  "name": "PhoneKeyServer",
+  "name": "PhoneKeyTcpServer",
   "version": "0.0.0",
   "description": "Server application for Phone-Key electronic door lock.",
   "dependencies": {
@@ -9,10 +9,9 @@
     "http": "*",
     "mongoose": "*",
     "bcrypt": "*",
-    "passport": "*",
-    "passport-local": "*",
-    "connect-flash": "*",
-    "nodemailer": "*"
+    "nodemailer": "*",
+    "cron": "*",
+    "async": "*"
   },
   "scripts": {
     "start": "node app.js"
