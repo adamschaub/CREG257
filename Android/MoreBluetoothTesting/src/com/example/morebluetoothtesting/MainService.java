@@ -129,7 +129,7 @@ public class MainService extends Service {
 			                }
 			                oldBit = (byte)((oldByte >> i) & 0x1);
 			            }
-			            miDataCopy[j] = newByte;
+			            miData[j] = newByte;
 			        }
 			        miDataOK = true;
 					for (int i=0; i<8; i++) {
