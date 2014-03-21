@@ -87,6 +87,7 @@ public class MainService extends Service {
 			do {
 				miDataOK = true;
 				miData = listenForMIChallenge();
+				byte miDataCopy[] = miData;	// Keep an unmodified copy so we can mess with the original
 				for (int i=0; i<8; i++) {
 					if (miData[i] > 'z' || miData[i] < 'A')	{	// Not A-Za-z, not valid
 						miDataOK = false;
@@ -100,10 +101,40 @@ public class MainService extends Service {
 					ByteBuffer bufShifted = ByteBuffer.allocate(8);
 					bufShifted.putLong(shifted);
 					miData = bufShifted.array();
+					miDataOK = true;
 					for (int i=0; i<8; i++) {
 						if (miData[i] > 'z' || miData[i] < 'A')	{	// Not A-Za-z, not valid
 							miDataOK = false;
-							break;
+						}
+					}
+				}
+				/* Still not valid, try something else... */
+				if (!miDataOK) {
+			        for (int j=0; j<8; j++) {
+			            byte oldByte = miDataCopy[j];
+			            byte newByte;
+			            byte oldBit = (byte)((oldByte >> 7) & 0x1);
+			            byte newBit;
+			            newByte = (byte) (oldBit << 7);
+			            for(int i=6; i>=0; i--) {
+			                if (((oldByte >> i) & 0x1) == oldBit) {
+			                    if (oldBit == 1)
+			                        newBit = 0;
+			                    else
+			                        newBit = 1;
+			                    newByte = (byte) (newByte | (newBit << i));
+			                }
+			                else {
+			                    newByte = (byte) (newByte | (byte)(((oldByte >> i) & 0x1) << i));
+			                }
+			                oldBit = (byte)((oldByte >> i) & 0x1);
+			            }
+			            miDataCopy[j] = newByte;
+			        }
+			        miDataOK = true;
+					for (int i=0; i<8; i++) {
+						if (miData[i] > 'z' || miData[i] < 'A')	{	// Not A-Za-z, not valid
+							miDataOK = false;
 						}
 					}
 				}
