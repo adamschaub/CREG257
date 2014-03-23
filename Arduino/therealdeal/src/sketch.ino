@@ -40,6 +40,8 @@
 #define CMD_UNLOCK	1
 #define CMD_NONE	2
 
+#define LOCK_ID	"phnky1"
+
 void get_cmd(void);
 void do_mi_authentication(uint8_t);
 void initLock(void);
@@ -159,6 +161,23 @@ void loop()
 			bt_state = UNCONNECTED;
 		}
 	}
+
+	if (readWiflySerial()) {
+		if (checkData(wifly_buf, (uint8_t *) "sendid", 6)) {
+			wiflySerial.write("id:")
+			wiflySerial.write(LOCK_ID);
+		}
+		else if (checkData(wifly_buf, (uint8_t *) "sendStatus", 10)) {
+			if (lock_state == LOCK_UNLOCKED)
+				wiflySerial.write("status:ookok");
+			else
+				wiflySerial.write("status:cokok");
+		}
+		else if (checkData(wifly_buf, (uint8_t *) "update", 6)) {
+			doUpdate(wifly_buf);
+		}
+	}
+
 #if 0
 	if (readWiflySerial()) {
 		if (checkData(wifly_buf, (uint8_t *) "unlock", 6)) {
@@ -301,6 +320,41 @@ void readACL()
 	for (; acl_ptr < (uint8_t *) acl + (uint8_t) (acl_num_entries *sizeof(acl_entry_t)); acl_ptr++, eeprom_addr++) {
 		*acl_ptr = EEPROM.read(eeprom_addr);
 	}
+	acl_current = 0;
+}
+
+void doUpdate(uint8_t *buf)
+{
+	if (*buf == 'o')
+		unlock();
+	else if (*buf == 'c')
+		lock();
+	buf++;
+	if (*buf == 'e') {}	// enable
+	else if (*buf == 'd') {}	// disable
+	buf++;
+
+	uint8_t numStr[3];
+	numStr[0] = buf[0];
+	numStr[1] = buf[1];
+	numStr[2] = '\0';
+	uint8_t numAddrs = atoi(numStr);
+	buf += 2;
+
+	uint8_t i, j;
+	uint8_t *key = (uint8_t *) "12345678123456781234567812345678";
+	uint8_t *acl_ptr = (uint8_t *) acl;
+	for (i=0; i<numAddrs; i++) {
+		/* Write key */
+		for (j=0; j<32; j++, acl_ptr++, key++) {
+			*acl_ptr = *key;
+		}
+		/* Write mac addr */
+		for (j=0; j<12; j++, acl_ptr++, buf++) {
+			*acl_ptr = *buf;
+		}
+	}
+	acl_num_entries = numAddrs;
 	acl_current = 0;
 }
 
@@ -454,7 +508,7 @@ void transmitByte(uint8_t data)
 		else
 			cbi(PORTB, 0);
 		delay(9);
-		delayMicroseconds(990);
+		delayMicroseconds(980);
 #endif
 		data >>= 1;
 	}
@@ -471,10 +525,10 @@ void preamble(void)
 #else
 		sbi(PORTB, 0);
 		delay(9);
-		delayMicroseconds(990);
+		delayMicroseconds(980);
 		cbi(PORTB, 0);
 		delay(9);
-		delayMicroseconds(990);
+		delayMicroseconds(980);
 #endif
 	}
 }
