@@ -164,7 +164,7 @@ void loop()
 
 	if (readWiflySerial()) {
 		if (checkData(wifly_buf, (uint8_t *) "sendid", 6)) {
-			wiflySerial.write("id:")
+			wiflySerial.write("id:");
 			wiflySerial.write(LOCK_ID);
 		}
 		else if (checkData(wifly_buf, (uint8_t *) "sendStatus", 10)) {
@@ -173,7 +173,7 @@ void loop()
 			else
 				wiflySerial.write("status:cokok");
 		}
-		else if (checkData(wifly_buf, (uint8_t *) "update", 6)) {
+		else if (checkData(wifly_buf, (uint8_t *) "update:", 7)) {
 			doUpdate(wifly_buf);
 		}
 	}
@@ -325,6 +325,7 @@ void readACL()
 
 void doUpdate(uint8_t *buf)
 {
+	buf += 7;
 	if (*buf == 'o')
 		unlock();
 	else if (*buf == 'c')
@@ -338,8 +339,10 @@ void doUpdate(uint8_t *buf)
 	numStr[0] = buf[0];
 	numStr[1] = buf[1];
 	numStr[2] = '\0';
-	uint8_t numAddrs = atoi(numStr);
+	uint8_t numAddrs = atoi((char *) numStr);
 	buf += 2;
+
+	wiflySerial.print(numAddrs);
 
 	uint8_t i, j;
 	uint8_t *key = (uint8_t *) "12345678123456781234567812345678";
