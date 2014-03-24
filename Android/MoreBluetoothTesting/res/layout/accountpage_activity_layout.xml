@@ -7,27 +7,26 @@
         android:id="@+id/enableDisableButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/bbutton_primary"
         android:text="Enable/Disable Lock" />
 
-    <Button
-        android:id="@+id/lockUnlockButton"
+    <ImageButton
+        android:id="@+id/lockImageButton"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignRight="@+id/enableDisableButton"
-        android:layout_below="@+id/enableDisableButton"
-        android:layout_marginTop="16dp"
-        android:text="Lock/Unlock" />
+        android:layout_height="300dp"
+        android:background="@android:color/transparent"
+        android:scaleType="centerInside"
+        android:src="@drawable/locked" />
 
     <TextView
         android:id="@+id/lockStatusText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/enableDisableButton"
-        android:layout_below="@+id/lockUnlockButton"
-        android:layout_marginLeft="21dp"
-        android:layout_marginTop="32dp"
+        android:layout_below="@+id/lockImageButton"
+        android:layout_centerHorizontal="true"
         android:text="Large Text"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
