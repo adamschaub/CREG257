@@ -7,6 +7,7 @@ var cronJob = require('cron').CronJob;
 var async = require('async');
 var eKey = require('./models/e_keys.js').eKey;
 var Lock = require('./models/lock.js').Lock;
+var User = require('./models/user.js').User;
 
 var socks = {};
 var reqStr = new RegExp(/^(.*):(.*)/);
@@ -22,13 +23,60 @@ mongoose.connect(dbConfig.uri, function(err) {
 });
 
 var job = new cronJob('*/10 * * * * *', function() {
-    console.log("All locks: ");
     async.forEach(Object.keys(socks),
             function(key, next) {
-                console.log(key + ": " + socks[key].id);
 
-                eKey.find({lockId: socks[key].id}, function(err, ekeys) {
-                    socks[key].con.write("You have " + ekeys.length + " eKeys");
+                var now = new Date(Date.now());
+                console.log(now.toJSON());
+                eKey.find({lockId: socks[key].id , nextActive: {$lte: now} , end: {$gte: now}}).populate('contact').exec(function(err, ekeys) {
+                    Lock.find({device: socks[key].id}, function(err, lock) {
+                        console.log(ekeys.length + " ekeys");
+                        var updateStr = "update:";
+
+                        if(lock.remoteOpen) updateStr += "o";
+                        else updateStr += "c";
+
+                        if(lock.disabled) updateStr += "d";
+                        else updateStr += "e";
+
+                        var numUpdates = 0;
+                        var macUpdate = "";
+                        for(var i = 0; i < ekeys.length; ++i) {
+                            //check if key must be added, deleted, disabled, or enabled
+                            console.log(i + " nextActive: " + ekeys[i].nextActive);
+                            console.log(i + " nextDisable: " + ekeys[i].nextDisable);
+                            console.log(i + " start: " + ekeys[i].start);
+                            console.log(i + " end: " + ekeys[i].end);
+                            if(ekeys[i].contact.phone.MAC && ekeys[i].nextDisable >= now) {
+                                numUpdates++;
+                                macUpdate += ekeys[i].contact.phone.MAC;
+                            }
+
+                            if(ekeys[i].nextDisable <= now) {
+                                if(ekeys[i].interval === "none") {
+                                    ekeys[i].nextActive = ekeys[i].end;
+                                }
+                                else if(ekeys[i].interval === "daily") {
+                                    ekeys[i].nextActive.addDays(1);
+                                    ekeys[i].nextDisable.addDays(1);
+                                }
+                                else if(ekeys[i].interval === "weekly") {
+                                    ekeys[i].nextActive.addDays(7);
+                                    ekeys[i].nextDisable.addDays(7);
+                                }
+
+                                ekeys[i].markModified('nextActive');
+                                ekeys[i].markModified('nextDisable');
+                                ekeys[i].save(function(err, ekey) {
+                                    if(err) console.log(err);
+                                });
+                            }
+
+                        }
+
+                        updateStr += formatNumberLength(numUpdates, 2) + macUpdate;
+                        socks[key].con.write(updateStr);
+                    });
                 });
 
                 next();
@@ -41,8 +89,30 @@ var job = new cronJob('*/10 * * * * *', function() {
                     console.log("Done pushing updates");
                 }
             });
-}, null, true, "America/Los_Angeles");
+}, null, true, "GMT");
 
+//format number
+function formatNumberLength(num, len) {
+    var n = "" + num;
+    while(n.length < len) {
+        n = "0" + n;
+    }
+    return n;
+}
+
+Date.prototype.addHours = function(h) {
+    this.setHours(this.getHours() + h);
+}
+
+Date.prototype.addMinutes = function(m) {
+    this.setMinutes(this.getMinutes() + m);
+}
+
+Date.prototype.addDays = function(d) {
+    this.setDate(this.getDate() + d);
+}
+
+var port = process.env.PORT || 5000;
 var server = net.createServer({allowHalfOpen:true}, function(con) {
 
     con.name = con.remoteAddress + ":" + con.remotePort;
@@ -89,7 +159,7 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
         console.log(con.name + " has disconnected. Removing from connections.");
         delete socks[con.name];
     });
-}).listen(process.env.PORT);
+}).listen(port);
 
 console.log("TCP listening on " + process.env.PORT);
 
