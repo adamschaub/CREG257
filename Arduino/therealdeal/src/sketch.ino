@@ -26,7 +26,7 @@
 
 #define BT_RX		   	2
 #define BT_TX		   	3
-#define BT_CMDBUF_LEN   100
+#define BT_CMDBUF_LEN   200
 #define MAC_ADDR_SIZE	12
 
 #define UNCONNECTED	0
@@ -60,8 +60,8 @@ typedef struct acl_entry {
 	uint8_t mac_addr[MAC_ADDR_SIZE];
 } acl_entry_t;
 
-acl_entry_t acl[1];
-uint8_t acl_num_entries;
+acl_entry_t acl[5];
+int8_t acl_num_entries;
 uint8_t acl_current;
 
 //HardwareSerial dbSerial = Serial;
@@ -118,11 +118,11 @@ void setup()
 void loop()
 {
 	/* Try connecting to phone if not currently connected or trying to connect */
-	if (bt_state == UNCONNECTED) {
-	//	bt_state = CONNECTING;
+	if (bt_state == UNCONNECTED && acl_current >= 0) {
+//		bt_state = CONNECTING;
 		btSerial.write("C,");
-		btSerial.write("78521A53544B");
-//		btSerial.write((char *) acl[acl_current].mac_addr);
+//		btSerial.write("78521A53544B");
+		btSerial.write((char *) acl[acl_current].mac_addr);
 		btSerial.write("\r");
 		delay(100);
 //		LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
@@ -161,11 +161,20 @@ void loop()
 			bt_state = UNCONNECTED;
 		}
 	}
-
+static int t = 0;
 	if (readWiflySerial()) {
 		if (checkData(wifly_buf, (uint8_t *) "sendid", 6)) {
+		if (!t)
+			digitalWrite(UNLOCKED_PIN, HIGH);
+		else
+			digitalWrite(UNLOCKED_PIN, LOW);
+			t = !t;
 			wiflySerial.write("id:");
 			wiflySerial.write(LOCK_ID);
+			if (wifly_buf[0] == '\r')
+				digitalWrite(LOCKED_PIN, LOW);
+			wifly_buf[7] = 0;
+			wiflySerial.flush();
 		}
 		else if (checkData(wifly_buf, (uint8_t *) "sendStatus", 10)) {
 			if (lock_state == LOCK_UNLOCKED)
@@ -176,7 +185,7 @@ void loop()
 		else if (checkData(wifly_buf, (uint8_t *) "update:", 7)) {
 			doUpdate(wifly_buf);
 		}
-	}
+	}// else {digitalWrite(UNLOCKED_PIN, LOW);}
 
 #if 0
 	if (readWiflySerial()) {
@@ -258,12 +267,13 @@ void initLock(void)
 	digitalWrite(LOCKED_PIN, HIGH);
 	digitalWrite(UNLOCKED_PIN, HIGH);
 
-	/* Not initialized */
+	/* Not initialized *
 	if (EEPROM.read(0) == 255) {
 		initACL();
 	} else {
 		readACL();
-	}
+	}*/
+	acl_current = -1;
 
 	lock_state = LOCK_LOCKED;
 
@@ -342,7 +352,7 @@ void doUpdate(uint8_t *buf)
 	uint8_t numAddrs = atoi((char *) numStr);
 	buf += 2;
 
-	wiflySerial.print(numAddrs);
+	numAddrs = numStr[1] - '0';
 
 	uint8_t i, j;
 	uint8_t *key = (uint8_t *) "12345678123456781234567812345678";
