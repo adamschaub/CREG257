@@ -43,10 +43,6 @@ var job = new cronJob('*/10 * * * * *', function() {
                         var macUpdate = "";
                         for(var i = 0; i < ekeys.length; ++i) {
                             //check if key must be added, deleted, disabled, or enabled
-                            console.log(i + " nextActive: " + ekeys[i].nextActive);
-                            console.log(i + " nextDisable: " + ekeys[i].nextDisable);
-                            console.log(i + " start: " + ekeys[i].start);
-                            console.log(i + " end: " + ekeys[i].end);
                             if(ekeys[i].contact.phone.MAC && ekeys[i].nextDisable >= now) {
                                 numUpdates++;
                                 macUpdate += ekeys[i].contact.phone.MAC;
@@ -75,7 +71,8 @@ var job = new cronJob('*/10 * * * * *', function() {
                         }
 
                         updateStr += formatNumberLength(numUpdates, 2) + macUpdate;
-                        socks[key].con.write(updateStr);
+                        console.log(updateStr);
+                        socks[key].con.write(updateStr + "\r");
                     });
                 });
 
@@ -118,7 +115,9 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
     con.name = con.remoteAddress + ":" + con.remotePort;
     console.log("New connection made to " + con.name);
     console.log("Requesting deviceID");
-    con.write("sendid");
+    con.write("sendid\r");
+
+    setTimeout(requestId, 3000, con);
 
     con.on('data', function(e) {
         e = e.toString().replace(/(\n|\r)+/, '').trim();
@@ -139,10 +138,10 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
                         'id': text[2],
                         'con': con
                     };
-                    con.write("sendid:success");
+                    con.write("sendid:success\r");
                 }
                 else{
-                    con.write("sendid:failure")
+                    con.write("sendid:failure\r")
                 }
             });
             //check for lock in database
@@ -159,7 +158,20 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
         console.log(con.name + " has disconnected. Removing from connections.");
         delete socks[con.name];
     });
+
+    con.on('error', function() {
+        console.log("Connection closed");
+    });
+
 }).listen(port);
+
+function requestId(con) {
+    if(!socks[con.name] && con.writable) {
+        console.log("Requesting DeviceID");
+        con.write("sendid\r");
+        setTimeout(requestId, 3000, con);
+    }
+}
 
 console.log("TCP listening on " + process.env.PORT);
 
