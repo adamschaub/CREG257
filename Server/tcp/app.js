@@ -70,7 +70,7 @@ var job = new cronJob('*/10 * * * * *', function() {
 
                         }
 
-                        updateStr += formatNumberLength(numUpdates, 2) + macUpdate;
+                        updateStr += formatNumberLength(numUpdates, 2) + macUpdate.split(':').join("");
                         console.log(updateStr);
                         socks[key].con.write(updateStr + "\r");
                     });
