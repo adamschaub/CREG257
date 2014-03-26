@@ -80,6 +80,8 @@ uint8_t wifly_buf_pos = 0;
 
 uint8_t lock_state = LOCK_INIT;
 
+uint8_t registered = 0;	// stupid hack
+
 AES aes;
 
 void setup()
@@ -161,20 +163,12 @@ void loop()
 			bt_state = UNCONNECTED;
 		}
 	}
-static int t = 0;
+
 	if (readWiflySerial()) {
-		if (checkData(wifly_buf, (uint8_t *) "sendid", 6)) {
-		if (!t)
-			digitalWrite(UNLOCKED_PIN, HIGH);
-		else
-			digitalWrite(UNLOCKED_PIN, LOW);
-			t = !t;
+		if (checkData(wifly_buf, (uint8_t *) "sendid", 6) && !registered) {
+			registered = 1;
 			wiflySerial.write("id:");
 			wiflySerial.write(LOCK_ID);
-			if (wifly_buf[0] == '\r')
-				digitalWrite(LOCKED_PIN, LOW);
-			wifly_buf[7] = 0;
-			wiflySerial.flush();
 		}
 		else if (checkData(wifly_buf, (uint8_t *) "sendStatus", 10)) {
 			if (lock_state == LOCK_UNLOCKED)
@@ -338,8 +332,8 @@ void doUpdate(uint8_t *buf)
 	buf += 7;
 	if (*buf == 'o')
 		unlock();
-	else if (*buf == 'c')
-		lock();
+//	else if (*buf == 'c')
+//		lock();
 	buf++;
 	if (*buf == 'e') {}	// enable
 	else if (*buf == 'd') {}	// disable
