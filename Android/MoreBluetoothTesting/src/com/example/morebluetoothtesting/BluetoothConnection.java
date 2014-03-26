@@ -103,7 +103,8 @@ public class BluetoothConnection {
      * Stop all threads
      */
     public synchronized void stop() {
-    	if (mConnectedThread != null) {
+    	Log.v("STOPPPPPPPING!", "Stopping");
+		if (mConnectedThread != null) {
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
@@ -112,6 +113,7 @@ public class BluetoothConnection {
 			mInsecureAcceptThread = null;
 		}
         setState(STATE_NONE);
+        start();
     }
 
     /**
@@ -210,7 +212,7 @@ public class BluetoothConnection {
             BluetoothSocket socket = null;
 
             // Listen to the server socket if we're not connected
-            while (mState != STATE_CONNECTED) {
+            while (mState != STATE_CONNECTED &&  mState != STATE_NONE) {
                 try {
                     // This is a blocking call and will only return on a
                     // successful connection or an exception
@@ -254,7 +256,7 @@ public class BluetoothConnection {
         public void cancel() {
             Log.d("Stuff", "Socket Type" + mSocketType + "cancel " + this);
             try {
-                mmServerSocket.close();
+            mmServerSocket.close();
             } catch (IOException e) {
                 Log.e("Stuff", "Socket Type" + mSocketType + "close() of server failed", e);
             }
@@ -336,6 +338,7 @@ public class BluetoothConnection {
 
         public void cancel() {
             try {
+            	mmOutStream.close();
                 mmSocket.close();
             } catch (IOException e) {
                 Log.e("Exception!", "close() of connect socket failed", e);
