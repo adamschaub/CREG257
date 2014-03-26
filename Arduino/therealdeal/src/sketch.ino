@@ -374,6 +374,8 @@ void unlock(void)
 
 	lock_state = LOCK_UNLOCKED;
 
+	wiflySerial.write("status:ookok");
+
 /*	digitalWrite(A1, LOW);	// spin motor one way...
 	digitalWrite(A2, HIGH);
 	delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts

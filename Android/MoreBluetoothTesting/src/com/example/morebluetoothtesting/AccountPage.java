@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 public class AccountPage extends Activity {
@@ -25,7 +26,7 @@ public class AccountPage extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.accountpage_activity_layout);
 
-		final Button lockUnlockButton = ((Button)findViewById(R.id.lockUnlockButton));
+		final ImageButton lockUnlockButton = ((ImageButton)findViewById(R.id.lockImageButton));
 		final Button enableDisableButton = ((Button)findViewById(R.id.enableDisableButton));
 
 		Bundle extras = getIntent().getExtras();
@@ -79,12 +80,12 @@ public class AccountPage extends Activity {
 			}
 		});
 	}
-
+	
 	private void updateActivity() {
 		try {
 			String statusMsg = "";
 
-			final Button lockUnlockButton = ((Button)findViewById(R.id.lockUnlockButton));
+			final ImageButton lockUnlockButton = ((ImageButton)findViewById(R.id.lockImageButton));
 			final Button enableDisableButton = ((Button)findViewById(R.id.enableDisableButton));
 
 			String lockStatusRes = new WebRequest(sessionCookie).execute("http://phone-key-website.herokuapp.com/lock_status").get();
@@ -98,17 +99,18 @@ public class AccountPage extends Activity {
 			if (disabled) {
 				statusMsg = "Lock disabled";
 				((Button)findViewById(R.id.enableDisableButton)).setText("Enable Lock");
+				lockUnlockButton.setImageResource(R.drawable.locked_disabled);
 			}
 			else {
 				enableDisableButton.setText("Disable Lock");
 			}
 			if (!disabled && closed) {
 				statusMsg = "Lock closed";
-				lockUnlockButton.setText("Open Lock");
+				lockUnlockButton.setImageResource(R.drawable.locked);
 			}
 			else if (!disabled && !closed) {
 				statusMsg = "Lock open";
-				lockUnlockButton.setText("Close Lock");
+				lockUnlockButton.setImageResource(R.drawable.unlocked);
 			}
 
 			((TextView)findViewById(R.id.lockStatusText)).setText(statusMsg);
