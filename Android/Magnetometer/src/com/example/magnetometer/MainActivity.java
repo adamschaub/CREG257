@@ -1,5 +1,6 @@
 package com.example.magnetometer;
 
+import java.nio.ByteBuffer;
 import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
@@ -173,12 +174,92 @@ public class MainActivity extends Activity implements SensorEventListener {
 					//		binaryVal.setText(binaryVal.getText() + new String(encryptedData, 0, 16, "ASCII"));
 						} catch (Exception e) { Log.e("Error!", e.toString()); }
 						
+						boolean miDataOK = true;
+							for (int i=0; i<8; i++) {
+								if (encryptedData[i] > 'z' || encryptedData[i] < 'A')	{	// Not A-Za-z, not valid
+									miDataOK = false;
+									break;
+								}
+							}
+							byte copyData[] = encryptedData; 
+							/* If that wasn't valid, try this... */
+							if (!miDataOK) {
+								ByteBuffer buf = ByteBuffer.wrap(encryptedData);
+								long shifted = ((buf.getLong()) >>> 2) | 0x4000000000000000L;
+								ByteBuffer bufShifted = ByteBuffer.allocate(8);
+								bufShifted.putLong(shifted);
+								encryptedData = bufShifted.array();
+								miDataOK = true;
+								for (int i=0; i<8; i++) {
+									if (encryptedData[i] > 'z' || encryptedData[i] < 'A')	{	// Not A-Za-z, not valid
+										miDataOK = false;
+										break;
+									}
+								}
+								if (!miDataOK) {	//still not ok...
+							        for (int j=0; j<8; j++) {
+							            byte oldByte = copyData[j];
+							            byte newByte;
+							            byte oldBit = (byte)((oldByte >> 7) & 0x1);
+							            byte newBit;
+							            newByte = (byte) (oldBit << 7);
+							            for(int i=6; i>=0; i--) {
+							                if (((oldByte >> i) & 0x1) == oldBit) {
+							                    if (oldBit == 1)
+							                        newBit = 0;
+							                    else
+							                        newBit = 1;
+							                    newByte = (byte) (newByte | (newBit << i));
+							                }
+							                else {
+							                    newByte = (byte) (newByte | (byte)(((oldByte >> i) & 0x1) << i));
+							                }
+							                oldBit = (byte)((oldByte >> i) & 0x1);
+							            }
+							            encryptedData[j] = newByte;
+							        }
+							        miDataOK = true;
+									for (int i=0; i<8; i++) {
+										if (encryptedData[i] > 'z' || encryptedData[i] < 'A')	{	// Not A-Za-z, not valid
+											miDataOK = false;
+											break;
+										}
+									}
+									if (!miDataOK) { // stillll not ok...
+										buf = ByteBuffer.wrap(copyData);
+										shifted = (~((buf.getLong()) << 1)) & 0xFFFFFFFFFFFFFFFEL;
+										bufShifted = ByteBuffer.allocate(8);
+										bufShifted.putLong(shifted);
+										encryptedData = bufShifted.array();
+										miDataOK = true;
+									}
+								}
+							}
+						
 						for (int i=0; i<8; i++) {
 							//binaryVal.setText(binaryVal.getText() + "" + (char) decryptedData[i]);
 							binaryVal.setText(binaryVal.getText() + "" + String.format("%c", (encryptedData[i] & 0xff)));
 						}
+						
+						String f = "";
+						for (int i=0; i<8; i++) {
+							f += (encryptedData[i] & 0xff) + " ";
+						}
+						Log.v("f", f);
+						
+						ByteBuffer buf = ByteBuffer.wrap(encryptedData);
+						long shifted = ((buf.getLong()) >>> 2) | 0x4000000000000000L;
+						ByteBuffer bufShifted = ByteBuffer.allocate(8);
+						bufShifted.putLong(shifted);
+						encryptedData = bufShifted.array();
+						
+						f = "";
+						for (int i=0; i<8; i++) {
+							f += String.format("%c", (encryptedData[i] & 0xff));
+						}
+						Log.v("f", f);
 						try {
-							Log.v("Errors:", errors+":"+noterrors);
+							//Log.v("Errors:", errors+":"+noterrors);
 							//Log.v("Here!", new String(encryptedData, 0, 16, "ASCII"));
 						} catch (Exception e) { Log.e("Error!", e.toString()); }
 					}

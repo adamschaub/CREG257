@@ -138,6 +138,14 @@ public class MainService extends Service {
 						}
 					}
 				}
+				if (!miDataOK) { // stillll not ok...
+					ByteBuffer buf = ByteBuffer.wrap(miDataCopy);
+					long shifted = (~((buf.getLong()) << 1)) & 0xFFFFFFFFFFFFFFFEL;
+					ByteBuffer bufShifted = ByteBuffer.allocate(8);
+					bufShifted.putLong(shifted);
+					miData = bufShifted.array();
+					miDataOK = true;
+				}
 			} while (!miDataOK);
 
 			/* Reply to the door with the challenge we received, and wait for an ACK or NAK. */
