@@ -29,12 +29,14 @@ var job = new cronJob('*/10 * * * * *', function() {
                 var now = new Date(Date.now());
                 console.log(now.toJSON());
                 eKey.find({lockId: socks[key].id , nextActive: {$lte: now} , end: {$gte: now}}).populate('contact').exec(function(err, ekeys) {
-                    Lock.find({device: socks[key].id}, function(err, lock) {
+                    Lock.findOne({device: socks[key].id}, function(err, lock) {
                         console.log(ekeys.length + " ekeys");
                         var updateStr = "update:";
 
+						console.log(lock);
                         if(lock.remoteOpen) updateStr += "o";
-                        else updateStr += "c";
+                        else if(lock.remoteClose) updateStr += "c";
+                        else updateStr += "n";
 
                         if(lock.disabled) updateStr += "d";
                         else updateStr += "e";
@@ -129,6 +131,35 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
         else if(text[1] === "status" && socks[con.name]) {
             console.log("Status from " + socks[con.name].id);
             console.log(text[2]);
+			Lock.findOne({device: socks[con.name].id}, function(err, lock) {
+				var newRemoteOpen = lock.remoteOpen;
+				var newClosed = lock.closed;
+				if(text[2].charAt(0) == 'o') {
+					if (lock.remoteOpen) {	// we did the remote open
+						newRemoteOpen = false;
+					}
+					newClosed = false;
+				}
+				else {
+					newClosed = true;
+				}
+				Lock.update({device:socks[con.name].id}, {remoteOpen: newRemoteOpen}, {}, function(err) {
+					if(err) {
+						console.log(err);
+					}
+					else {
+						console.log("updating remote open successful");
+					}
+				});
+				Lock.update({device:socks[con.name].id}, {closed: newClosed}, {}, function(err) {
+					if(err) {
+						console.log(err);
+					}
+					else {
+						console.log("updating closed successful");
+					}
+				});
+			});
         }
         else if(text[1] === "id") {
             Lock.findOne({device: text[2]}, function(err, lock) {
