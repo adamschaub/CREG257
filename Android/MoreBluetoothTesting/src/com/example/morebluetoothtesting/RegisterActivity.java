@@ -15,6 +15,9 @@ import android.widget.TextView;
 
 public class RegisterActivity extends Activity {
 
+	//private String website = "http://phone-key-website.herokuapp.com/";
+	private String website = "http://192.168.150.1:5001/";
+
 	private Activity thisActivity = this;
 
 	/** Called when the activity is first created. */
@@ -27,7 +30,7 @@ public class RegisterActivity extends Activity {
 	    registerButton.setOnClickListener(new View.OnClickListener () {
 			public void onClick(View v) {
 				try {
-					String res = new WebRequest().execute("http://phone-key-website.herokuapp.com/mobile-register",
+					String res = new WebRequest().execute(website + "mobile-register",
 							"username", ((TextView)findViewById(R.id.username)).getText().toString(),
 							"password", ((TextView)findViewById(R.id.password1)).getText().toString(),
 							"firstname", ((TextView)findViewById(R.id.firstName)).getText().toString(),

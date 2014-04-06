@@ -26,7 +26,7 @@ public class MainService extends Service {
 	private String CLASS_NAME = this.getClass().getSimpleName();
 
 	private int KEY_SIZE = 32;
-
+	
 	private BluetoothConnection btConnection = null;
 	private Magnetometer magListener = null;
 	

@@ -27,6 +27,9 @@ public class MainActivity extends Activity {
 
 	private String CLASS_NAME = this.getClass().getSimpleName();
 	
+	//private String website = "http://phone-key-website.herokuapp.com/";
+	private String website = "http://192.168.150.1:5001/";
+
 	Magnetometer magListener = null;
 	
 	private Intent mainIntent;
@@ -68,7 +71,7 @@ public class MainActivity extends Activity {
 					CookieStore sessionCookie;
 
 					/* Todo: progress bar like thing */
-					String res = loginReq.execute("http://phone-key-website.herokuapp.com/mobile-login",
+					String res = loginReq.execute(website + "mobile-login",
 							"username", ((TextView)findViewById(R.id.usernameField)).getText().toString(),
 							"password", ((TextView)findViewById(R.id.passwordField)).getText().toString()).get(10000, TimeUnit.MILLISECONDS);
 
@@ -91,7 +94,7 @@ public class MainActivity extends Activity {
 					if (jsonRes.has("loggedIn") && jsonRes.getBoolean("loggedIn")) {
 						Log.v("dsa", "Logged in");
 						if (jsonRes.has("update") && jsonRes.getBoolean("update")) {	// need to issue update with MAC addr
-							String updateRes = new WebRequest(sessionCookie).execute("http://phone-key-website.herokuapp.com/update/" + jsonRes.getString("username"),
+							String updateRes = new WebRequest(sessionCookie).execute(website + "update/" + jsonRes.getString("username"),
 									"MAC", BluetoothAdapter.getDefaultAdapter().getAddress()).get();
 						}
 						List<Cookie> cookieList = sessionCookie.getCookies();
