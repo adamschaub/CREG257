@@ -11,6 +11,7 @@ var lockSchema = new mongoose.Schema({
     owner: String,
     closed: Boolean,
     remoteOpen: Boolean,
+    remoteClose: Boolean,
     disabled: Boolean
 });
 

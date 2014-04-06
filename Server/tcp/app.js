@@ -34,9 +34,15 @@ var job = new cronJob('*/10 * * * * *', function() {
                         var updateStr = "update:";
 
 						console.log(lock);
-                        if(lock.remoteOpen) updateStr += "o";
-                        else if(lock.remoteClose) updateStr += "c";
-                        else updateStr += "n";
+                        if(lock.remoteOpen) {
+							updateStr += "o";
+						}
+                        else if(lock.remoteClose) {
+							updateStr += "c";
+						}
+                        else {
+							updateStr += "n";
+						}
 
                         if(lock.disabled) updateStr += "d";
                         else updateStr += "e";
@@ -134,6 +140,7 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
 			Lock.findOne({device: socks[con.name].id}, function(err, lock) {
 				var newRemoteOpen = lock.remoteOpen;
 				var newClosed = lock.closed;
+				var newRemoteClose = lock.remoteClose;
 				if(text[2].charAt(0) == 'o') {
 					if (lock.remoteOpen) {	// we did the remote open
 						newRemoteOpen = false;
@@ -141,8 +148,19 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
 					newClosed = false;
 				}
 				else {
+					if (lock.remoteClose) {
+						newRemoteClose = false;
+					}
 					newClosed = true;
 				}
+				Lock.update({device:socks[con.name].id}, {remoteClose: newRemoteClose}, {}, function(err) {
+					if(err) {
+						console.log(err);
+					}
+					else {
+						console.log("updating remote close successful");
+					}
+				});
 				Lock.update({device:socks[con.name].id}, {remoteOpen: newRemoteOpen}, {}, function(err) {
 					if(err) {
 						console.log(err);
