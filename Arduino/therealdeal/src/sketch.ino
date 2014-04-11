@@ -8,17 +8,19 @@
 
 #define KEY_SIZE (256/8)	// int is (I believe) 8 bits, so use byte size instead of bit size
 
-#define LOCKED_PIN 		12	// PB4
-#define UNLOCKED_PIN	9	// PB1
+#define LOCKED_PIN 		5	// PB4
+#define UNLOCKED_PIN	6	// PB1
 
 #define	LOCK_INIT		0
 #define LOCK_LOCKED		1
 #define LOCK_UNLOCKED	2
 
-#define	EN12			6	// Enable H-bridge outputs 1 and 2
-#define A1				7	// H-bridge control 1A
-#define A2				4	// H-bridge control 2A
-#define MOTOR_READING	5	// analog input for reading motor current draw
+//#define	EN12			6	// Enable H-bridge outputs 1 and 2
+#define MOTOR_UNLOCK		7	// H-bridge control 1A - PD7
+#define MOTOR_LOCK			4	// H-bridge control 2A - PD4
+#define CHECK_LOCKED	9	// LOW if true - PB1 - BLACK
+#define CHECK_UNLOCKED	10	// LOW if true - PB2 - GREEN
+//#define MOTOR_READING	5	// analog input for reading motor current draw
 
 #define MI_OUT_PIN		8	// PB0
 #define	TRANSMIT_FREQ	101	// sampling freq of phone, in hertz
@@ -40,7 +42,7 @@
 #define CMD_UNLOCK	1
 #define CMD_NONE	2
 
-#define LOCK_ID	"phnky1"
+#define LOCK_ID	"phnky3"
 
 void get_cmd(void);
 void do_mi_authentication(uint8_t);
@@ -95,15 +97,36 @@ void setup()
 	pinMode(LOCKED_PIN, OUTPUT);
 	pinMode(UNLOCKED_PIN, OUTPUT);
 
-	pinMode(EN12, OUTPUT);  // 1,2EN pin
-	pinMode(A1, OUTPUT);	// 1A pin
-	pinMode(A2, OUTPUT);	// 2A pin
-	digitalWrite(EN12, HIGH);   // Enable
+	//pinMode(EN12, OUTPUT);  // 1,2EN pin
+	pinMode(MOTOR_LOCK, OUTPUT);	// 1A pin
+	pinMode(MOTOR_UNLOCK, OUTPUT);	// 2A pin
+	pinMode(CHECK_LOCKED, INPUT);
+	pinMode(CHECK_UNLOCKED, INPUT);
+	//digitalWrite(EN12, HIGH);   // Enable
 
 	pinMode(MI_OUT_PIN, OUTPUT);
 	digitalWrite(MI_OUT_PIN, LOW);
 
-	analogReference(INTERNAL);
+	digitalWrite(LOCKED_PIN, HIGH);
+	digitalWrite(UNLOCKED_PIN, HIGH);
+
+	digitalWrite(MOTOR_LOCK, LOW);
+	digitalWrite(MOTOR_UNLOCK, LOW);
+
+/*for(;;) {
+	digitalWrite(MOTOR_LOCK, HIGH);
+	delay(500);
+	//while(digitalRead(CHECK_LOCKED));	// wait until in locked position
+	digitalWrite(MOTOR_LOCK, LOW);
+	delay(1000);
+	digitalWrite(MOTOR_UNLOCK, HIGH);
+	delay(500);
+	//while(digitalRead(CHECK_UNLOCKED));	// wait until in unlocked position
+	digitalWrite(MOTOR_UNLOCK, LOW);
+	delay(1000);
+}*/
+
+//	analogReference(INTERNAL);
 
 	initLock();
 
@@ -123,8 +146,8 @@ void loop()
 	if (bt_state == UNCONNECTED && acl_current >= 0) {
 //		bt_state = CONNECTING;
 		btSerial.write("C,");
-//		btSerial.write("78521A53544B");
-		btSerial.write((char *) acl[acl_current].mac_addr);
+		btSerial.write("78521A53544B");
+//		btSerial.write((char *) acl[acl_current].mac_addr);
 		btSerial.write("\r");
 		delay(100);
 //		LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
@@ -134,9 +157,10 @@ void loop()
 	 * This will be unencrypted, because it's coming directly from the module */
 	if (readBTSerial()) {
 		/* Connected to phone, so now listen for the command the phone wants us to execute */
+		//btSerial.write(bt_buf, 15);
 		if (checkData(bt_buf, (uint8_t *) "+CONNECT", 8)) {
 			bt_state = CONNECTED;
-			aes.set_key(acl[acl_current].key, KEY_SIZE);
+//			aes.set_key(acl[acl_current].key, KEY_SIZE);
 			aes.set_key((uint8_t *) "12345678123456781234567812345678", 32);
 			get_cmd();
 		}
@@ -166,7 +190,7 @@ void loop()
 
 	if (readWiflySerial()) {
 		if (checkData(wifly_buf, (uint8_t *) "sendid", 6) && !registered) {
-			registered = 1;
+			//registered = 1;
 			wiflySerial.write("id:");
 			wiflySerial.write(LOCK_ID);
 		}
@@ -178,6 +202,10 @@ void loop()
 		}
 		else if (checkData(wifly_buf, (uint8_t *) "update:", 7)) {
 			doUpdate(wifly_buf);
+			if (lock_state == LOCK_UNLOCKED)
+				wiflySerial.write("status:ookok");
+			else
+				wiflySerial.write("status:cokok");
 		}
 	}// else {digitalWrite(UNLOCKED_PIN, LOW);}
 
@@ -332,8 +360,8 @@ void doUpdate(uint8_t *buf)
 	buf += 7;
 	if (*buf == 'o')
 		unlock();
-//	else if (*buf == 'c')
-//		lock();
+	else if (*buf == 'c')
+		lock();
 	buf++;
 	if (*buf == 'e') {}	// enable
 	else if (*buf == 'd') {}	// disable
@@ -374,21 +402,10 @@ void unlock(void)
 
 	lock_state = LOCK_UNLOCKED;
 
-	wiflySerial.write("status:ookok");
-
-/*	digitalWrite(A1, LOW);	// spin motor one way...
-	digitalWrite(A2, HIGH);
-	delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
-	while (1) {
-		if (analogRead(MOTOR_READING) > 100)
-			numHundreds++;
-		else
-			numHundreds = 0;
-		if (numHundreds == 2)
-			break;
-	}
-	digitalWrite(A1, LOW);	// turn motor off
-	digitalWrite(A2, LOW);*/
+	digitalWrite(MOTOR_UNLOCK, HIGH);
+	delay(500);
+	//while (digitalRead(CHECK_UNLOCKED));	// When this goes low, its in unlocked position
+	digitalWrite(MOTOR_UNLOCK, LOW);
 }
 
 void lock(void)
@@ -400,19 +417,10 @@ void lock(void)
 
 	lock_state = LOCK_LOCKED;
 
-/*	digitalWrite(A1, HIGH);	// spin motor one way...
-	digitalWrite(A2, LOW);
-	delay(3000);	// wait before checking current draw, to avoid the spikes when motor first starts
-	while (1) {
-		if (analogRead(MOTOR_READING) > 100)
-			numHundreds++;
-		else
-			numHundreds = 0;
-		if (numHundreds == 2)
-			break;
-	}
-	digitalWrite(A1, LOW);	// turn motor off
-	digitalWrite(A2, LOW);*/
+	digitalWrite(MOTOR_LOCK, HIGH);
+	delay(500);
+	//while (digitalRead(CHECK_LOCKED));	// When this goes low, its in locked position
+	digitalWrite(MOTOR_LOCK, LOW);
 }
 
 /* Read output from the BT module.  Returns 1 if we reach
