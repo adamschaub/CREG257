@@ -128,8 +128,9 @@ var server = net.createServer({allowHalfOpen:true}, function(con) {
     setTimeout(requestId, 3000, con);
 
     con.on('data', function(e) {
-        e = e.toString().replace(/(\n|\r)+/, '').trim();
 
+        e = e.toString().replace(/(\n|\r)+/, '').trim();
+        console.log("Message: " + e);
         var text = reqStr.exec(e) || "none";
         if(text[1] === "update") {
             console.log("Update requested: " + text[2]);
